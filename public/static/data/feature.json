@@ -1,0 +1,92 @@
+[
+    {
+        "type": "Feature",
+        "properties": {
+            "index": 1,
+            "layerID": "singlePoint",
+            "name": "singlePoint",
+            "featureType": "circle",
+            "paint": {
+                "circle-radius": 15,
+                "circle-color": "red",
+                "circle-opacity": 0.8
+            }
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [114.28146057130908, 30.71872306523744]
+        }
+    },
+    {
+        "type": "Feature",
+        "properties": {
+            "index": 1,
+            "layerID": "multiPoints",
+            "name": "多点",
+            "featureType": "circle"
+        },
+        "geometry": {
+            "type": "MultiPoint",
+            "coordinates": [
+                [114.336, 30.607],
+                [114.69756774905642, 30.8314042327425],
+                [113.97178344727797, 30.7635753583818],
+                [114.31510620120628, 30.43970006019113],
+                [114.67284851077011, 30.612410722493976]
+            ]
+        }
+    },
+    {
+        "type": "Feature",
+        "properties": {
+            "index": 1,
+            "layerID": "polyline",
+            "name": "polyline",
+            "featureType": "line"
+        },
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [
+                [114.336, 30.607],
+                [114.69756774905642, 30.8314042327425],
+                [113.97178344727797, 30.7635753583818],
+                [114.31510620120628, 30.43970006019113],
+                [114.67284851077011, 30.612410722493976]
+            ]
+        }
+    },
+    {
+        "type": "Feature",
+        "properties": {
+            "index": 1,
+            "layerID": "polygon",
+            "name": "polygon",
+            "featureType": "fill"
+        },
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [114.336, 30.607],
+                    [114.69756774905642, 30.8314042327425],
+                    [113.97178344727797, 30.7635753583818],
+                    [114.31510620120628, 30.43970006019113],
+                    [114.67284851077011, 30.612410722493976],
+                    [114.336, 30.607]
+                ]
+            ]
+        }
+    },
+    {
+        "type": "Feature",
+        "properties": {
+            "index": 1,
+            "layerID": "Marker",
+            "name": "Marker"
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [114.33670896986405, 30.481784521788327]
+        }
+    }
+]
