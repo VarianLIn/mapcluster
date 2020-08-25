@@ -60,7 +60,8 @@ export default {
 
         minagtion() {
             this.$http({
-                url: "../static/data/minage.json",
+                // url: require("../../static/json/minage.json"),
+                url: "static/json/minage.json",
                 method: "get",
             }).then(({ data }) => {
                 let migData = data[1].data;

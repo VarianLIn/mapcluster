@@ -1,6 +1,7 @@
 module.exports = {
     // //生成环境部署路径，默认为'/'
     // publicPath: process.env.NODE_ENV === 'production' ? '/production-sub-path/' : '/',
+    publicPath: './',
     // //当运行 build 时生成的生产环境构建文件的目录
     // outputDir: 'dist',
     // //放置生成的静态资源 (js、css、img、fonts) 的 (相对于 outputDir 的) 目录
