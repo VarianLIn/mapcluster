@@ -1,0 +1,19 @@
+{
+    "datasetId": "1",
+    "dataTitle": " ",
+    "fields": [
+        { "name": "name", "type": "VARCHAR2", "length": 100 },
+        { "name": "经度", "type": "NUMBER", "length": 22 },
+        { "name": "纬度", "type": "NUMBER", "length": 22 },
+        { "name": "统计数", "type": "NUMBER", "length": 22 },
+        { "name": "RN", "type": "NUMBER", "length": 22 }
+    ],
+    "features": [
+        { "attributes": { "name": "T1", "经度": "114.336", "纬度": "30.607", "统计数": "774", "RN": "3" } },
+        { "attributes": { "name": "T2", "经度": "113.673", "纬度": "30.80", "统计数": "294", "RN": "4" } },
+        { "attributes": { "name": "T3", "经度": "114.697", "纬度": "30.83", "统计数": "774", "RN": "3" } },
+        { "attributes": { "name": "T4", "经度": "114.384", "纬度": "30.357", "统计数": "294", "RN": "4" } },
+        { "attributes": { "name": "T5", "经度": "114.963", "纬度": "30.502", "统计数": "774", "RN": "3" } },
+        { "attributes": { "name": "T6", "经度": "114.313", "纬度": "30.239", "统计数": "294", "RN": "4" } }
+    ]
+}

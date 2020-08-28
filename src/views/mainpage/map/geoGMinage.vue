@@ -38,7 +38,7 @@ export default {
                         },
                     ],
                 },
-                lnglatlv: { lng: 114.345, lat: 30.675, lv: 4 },
+                lnglatlv: { lng: 114.345, lat: 30.675, lv: 9 },
             },
         };
     },
@@ -58,9 +58,9 @@ export default {
                 console.info(e);
             });
             custom.addTo(map);
-            console.log(custom);
 
-            var result = require("../../../../public/static/json/ggMinage.json");
+            // var result = require("../../../../public/static/json/ggMinage.json");
+            var result = require("../../../../public/static/json/ggwhM.json");
             var data = [];
             var mectorData = [];
             for (var i = 0; i < result.features.length; i++) {
@@ -69,14 +69,18 @@ export default {
                 var featrue = {
                     type: "Feature",
                     properties: {
-                        name: result.features[i].attributes["省"],
+                        name: result.features[i].attributes["name"],
                         value: parseInt(
                             result.features[i].attributes["统计数"]
                         ),
                     },
                     geometry: {
                         type: "Point",
-                        coordinates: GeoGlobe.Util.transferToLonLat(mectorData),
+                        // coordinates: GeoGlobe.Util.transferToLonLat(mectorData),
+                        coordinates:
+                            mectorData[0] > 200
+                                ? GeoGlobe.Util.transferToLonLat(mectorData)
+                                : mectorData,
                     },
                     itemStyle: null,
                     label: null,
@@ -85,13 +89,14 @@ export default {
                 data.push(featrue);
                 mectorData = [];
             }
+            // console.log(mectorData);
             var migration = new GeoGlobe.Visuals.Custom.Migration({
                 id: "migration_1",
                 visibility: true,
-                direction: "out",
+                direction: "in",
                 location: {
-                    name: "香港特别行政区",
-                    lonLat: [114.12694391453464, 22.380716926328258],
+                    name: "武汉",
+                    lonLat: [114.336, 30.607],
                 },
                 data: data,
                 rendererOptions: {
@@ -101,7 +106,7 @@ export default {
                         effect: {
                             color: "#fff",
                             scaleSize: 3,
-                            period: 25,
+                            period: 5,
                         },
                         itemStyle: {
                             color: null,
@@ -113,7 +118,7 @@ export default {
                         nameField: "name",
                         valueField: "value",
                         hoverable: true,
-                        symbol: "emptyCircle",
+                        symbol: "emptyCircle", // 可选为：'circle' | 'ring' | 'emptyCircle'
                         symbolMinSize: 20,
                         symbolMaxSize: 40,
                         effect: {
