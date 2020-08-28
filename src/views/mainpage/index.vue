@@ -8,18 +8,18 @@
 <template>
     <div class="b_body">
         <div class="b_main">
-            <b-header></b-header>
+            <b-header @bottomStatusSet="bottomStatus"></b-header>
             <div class="b_content">
                 <router-view></router-view>
             </div>
             <!-- <b-bottom :status="bottomShow"></b-bottom> -->
-            <b-bottom></b-bottom>
+            <b-bottom v-show="bottomShow"></b-bottom>
         </div>
     </div>
 </template>
 <script>
-import bHeader from '../header/header.vue';
-import bBottom from '../bottom/bottom.vue';
+import bHeader from "../header/header.vue";
+import bBottom from "../bottom/bottom.vue";
 
 export default {
     components: {
@@ -27,8 +27,15 @@ export default {
         bBottom,
     },
     data() {
-        return {};
+        return {
+            bottomShow: true,
+        };
     },
-    methods: {},
+    mounted() {},
+    methods: {
+        bottomStatus(data) {
+            this.bottomShow = data;
+        },
+    },
 };
 </script>

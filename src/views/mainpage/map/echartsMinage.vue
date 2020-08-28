@@ -1,10 +1,11 @@
 <template>
-    <div class="minage" id="minage" :style="pageSize"></div>
+    <div class="minage" id="minage" :style="mapHeight"></div>
 </template>
 <script>
 /* eslint-disable no-undef */
 /*eslint-disable no-unused-vars*/
 import {
+    getMapSize,
     initMap,
     initMapopera,
     addFeatureLayer,
@@ -44,27 +45,23 @@ export default {
                 },
                 lnglatlv: { lng: 114.345, lat: 30.675, lv: 9 },
             },
-            pageSize: {
+            mapHeight: {
                 height: "",
             },
         };
     },
     computed: {},
     created() {
-        this.getSize();
+        this.mapHeight.height = getMapSize();
     },
     mounted() {
-        // map = null;
         map = initMap("minage", this.magfg);
         initMapopera(map, this.magfg.lnglatlv);
         this.minagtion();
     },
     methods: {
-        getSize() {
-            this.pageSize.height = window.innerHeight + "px";
-        },
-
         minagtion() {
+            // axios 网络请求
             this.$http({
                 url: "static/json/minage.json",
                 method: "get",
@@ -98,7 +95,7 @@ export default {
                 }; //converdata
 
                 var series = [];
-                var planePath = "";
+                var planePath = "image://static/jpg/虫.png";
                 series.push(
                     {
                         name: "t1",

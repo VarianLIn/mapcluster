@@ -43,14 +43,16 @@ const pagerouters = [
                 // name: 'home',
                 meta: {
                     title: '首页',
+                    bottom: true,
                 },
-                component: (resolve) => require(['../views/mainpage/home.vue'], resolve),
+                component: (resolve) => require(['../views/mainpage/componentPage/home.vue'], resolve),
             },
             {
                 path: 'baidumap',
                 // name: 'baidumap',
                 meta: {
                     title: '百度地图',
+                    bottom: false,
                 },
                 component: (resolve) => require(['../views/mainpage/map/baidumap.vue'], resolve),
             },
@@ -59,6 +61,7 @@ const pagerouters = [
                 // name: 'geoglobemap',
                 meta: {
                     title: 'Geoglobe地图',
+                    bottom: false,
                 },
                 component: (resolve) => require(['../views/mainpage/map/geoglobemap.vue'], resolve),
             },
@@ -67,6 +70,7 @@ const pagerouters = [
                 // name: 'gaodemap',
                 meta: {
                     title: '高德地图',
+                    bottom: false,
                 },
                 component: (resolve) => require(['../views/mainpage/map/gaodemap.vue'], resolve),
             },
@@ -75,22 +79,34 @@ const pagerouters = [
                 // name: 'echartsMinage',
                 meta: {
                     title: 'echarts迁徙',
+                    bottom: false,
                 },
                 component: (resolve) => require(['../views/mainpage/map/echartsMinage.vue'], resolve),
+            },
+            {
+                path: 'ggMinage',
+                // name: 'echartsMinage',
+                meta: {
+                    title: 'GeoGlobe迁徙',
+                    bottom: false,
+                },
+                component: (resolve) => require(['../views/mainpage/map/geoGMinage.vue'], resolve),
             },
             {
                 path: 'other',
                 // name: 'other',
                 meta: {
                     title: '其他',
+                    bottom: true,
                 },
-                component: (resolve) => require(['../views/mainpage/other.vue'], resolve),
+                component: (resolve) => require(['../views/mainpage/componentPage/other.vue'], resolve),
             },
             {
                 path: '3dmigrationMap',
                 // name: 'echartsMinage',
                 meta: {
                     title: 'echarts迁徙',
+                    bottom: false,
                 },
                 component: (resolve) => require(['../views/mainpage/3dmap/3dmigrationMap.vue'], resolve),
             },

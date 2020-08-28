@@ -11,6 +11,29 @@
 /* eslint-disable no-debugger*/
 
 // 测试
+export function getMapSize() {
+    var contentH = 60; // 头部or底部的高度
+    var h = window.innerHeight - contentH + 'px';
+    return h;
+}
+
+// GPU帧数监测
+export function status() {
+    var stats = new Stats();
+    //设置统计模式
+    stats.setMode(0); // 0: fps, 1: ms
+    //统计信息显示在左上角
+    // stats.domElement.style.position = 'absolute';
+    // stats.domElement.style.left = '0px';
+    // stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.dom);
+    function animate() {
+        stats.update();
+        requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+    return stats;
+}
 
 // 地图初始化
 export function initMap(containerID, mapfg) {
@@ -28,7 +51,7 @@ export function initMap(containerID, mapfg) {
     var isTDT = eval(mapfg.isTDT);
     //判断是否添加天地图 -墨卡托数据的天地图
     if (isTDT && isTDT === true) {
-        basemap.on('load', function () {
+        basemap.on('load', function() {
             var token = 'e90d56e5a09d1767899ad45846b0cefd';
             var layer_vtc = new GeoGlobe.TDTLayer('vec_w', token);
             var layer_cva = new GeoGlobe.TDTLayer('cva_w', token);
@@ -68,18 +91,18 @@ export function initMap(containerID, mapfg) {
 // 地图拖拽点击缩放功能
 export function initMapopera(basemap, lnglatlv) {
     // console.log(lnglatlv);
-    basemap.on('click', function (e) {
+    basemap.on('click', function(e) {
         console.log(e);
         console.log('x lng ', e.lngLat.lng);
         console.log('y lat', e.lngLat.lat);
     });
-    basemap.on('dragend', function (e) {
+    basemap.on('dragend', function(e) {
         lnglatlv.lng = e.target.transform.center.lng;
         lnglatlv.lat = e.target.transform.center.lat;
         // console.log('draglng', e.target.transform.center.lng);
         // console.log('draglat', e.target.transform.center.lat);
     });
-    basemap.on('zoomend', function (e) {
+    basemap.on('zoomend', function(e) {
         lnglatlv.lv = e.target.transform.tileZoom;
         // console.log('zoome', e.target.transform.tileZoom);
         // console.log('zoom2', basemap.transform.tileZoom);
