@@ -2,32 +2,32 @@
     <div class="b-header">
         <Menu mode="horizontal" theme="dark" active-name="baidumap" @on-select="checkMenu">
             <MenuItem name="home">
-                <Icon type="ios-paper" />首页
+                <Icon custom="iconfont icon-shouye" />首页
             </MenuItem>
             <Submenu name="2DView">
                 <template slot="title">
-                    <Icon type="ios-stats" />地图
+                    <Icon custom="iconfont icon-ditu1" />地图
                 </template>
                 <MenuGroup title="2D-View">
                     <MenuItem v-for="(item, index) in mapList" :key="index" :name="item.name">
-                        <Icon :type="item.icon" />
+                        <Icon :custom="item.icon" />
                         {{ item.content }}
                     </MenuItem>
                 </MenuGroup>
             </Submenu>
             <Submenu name="3DView">
                 <template slot="title">
-                    <Icon type="ios-stats" />三维地图
+                    <Icon custom="iconfont icon-dditu" />三维地图
                 </template>
                 <MenuGroup title="3D-View">
                     <MenuItem v-for="(item, index) in threeMapList" :key="index" :name="item.name">
-                        <Icon :type="item.icon" />
+                        <Icon :custom="item.icon" />
                         {{ item.content }}
                     </MenuItem>
                 </MenuGroup>
             </Submenu>
             <MenuItem name="other">
-                <Icon type="ios-construct" />其他
+                <Icon custom="iconfont icon-qita" />其他
             </MenuItem>
             <Button
                 :type="loading?'error':'info'"
@@ -51,31 +51,36 @@ export default {
                     index: 1,
                     name: "baidumap",
                     content: "百度地图",
-                    icon: "md-american-football",
+                    // icon: "md-american-football",
+                    icon: "iconfont icon-baiduditu",
                 },
                 {
                     index: 2,
                     name: "gaodemap",
                     content: "高德地图",
-                    icon: "md-albums",
+                    // icon: "md-albums",
+                    icon: "iconfont icon-gaode",
                 },
                 {
                     index: 3,
                     name: "geoglobemap",
                     content: "GeoGlobe",
-                    icon: "ios-american-football",
+                    // icon: "ios-american-football",
+                    icon: "iconfont icon-mapbox",
                 },
                 {
                     index: 4,
                     name: "echartsMinage",
                     content: "echarts迁徙图",
-                    icon: "logo-apple",
+                    // icon: "logo-apple",
+                    icon: "iconfont icon-chengshiqianxitu",
                 },
                 {
                     index: 5,
                     name: "ggMinage",
                     content: "GeoGlobe迁徙图",
-                    icon: "logo-apple",
+                    // icon: "logo-apple",
+                    icon: "iconfont icon-qianxitu",
                 },
             ],
             threeMapList: [
@@ -83,7 +88,8 @@ export default {
                     index: 1,
                     name: "3dmigrationMap",
                     content: "三维迁徙",
-                    icon: "md-american-football",
+                    // icon: "md-american-football",
+                    icon: "iconfont icon-Dqianxitu",
                 },
                 {
                     index: 2,
