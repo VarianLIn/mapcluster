@@ -12,7 +12,7 @@
 
 // 测试
 export function getMapSize() {
-    var contentH = 60; // 头部or底部的高度
+    var contentH = 60 + 30; // 头部or底部的高度
     var h = window.innerHeight - contentH + 'px';
     return h;
 }

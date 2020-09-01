@@ -44,6 +44,7 @@ const pagerouters = [
                 meta: {
                     title: '首页',
                     bottom: true,
+                    icon: 'iconfont icon-shouye',
                 },
                 component: (resolve) => require(['../views/mainpage/componentPage/home.vue'], resolve),
             },
@@ -53,6 +54,7 @@ const pagerouters = [
                 meta: {
                     title: '百度地图',
                     bottom: false,
+                    icon: 'iconfont icon-baiduditu',
                 },
                 component: (resolve) => require(['../views/mainpage/map/baidumap.vue'], resolve),
             },
@@ -62,6 +64,7 @@ const pagerouters = [
                 meta: {
                     title: 'Geoglobe地图',
                     bottom: false,
+                    icon: 'iconfont icon-mapbox',
                 },
                 component: (resolve) => require(['../views/mainpage/map/geoglobemap.vue'], resolve),
             },
@@ -71,6 +74,7 @@ const pagerouters = [
                 meta: {
                     title: '高德地图',
                     bottom: false,
+                    icon: 'iconfont icon-gaode',
                 },
                 component: (resolve) => require(['../views/mainpage/map/gaodemap.vue'], resolve),
             },
@@ -80,6 +84,7 @@ const pagerouters = [
                 meta: {
                     title: 'echarts迁徙',
                     bottom: false,
+                    icon: 'iconfont icon-chengshiqianxitu',
                 },
                 component: (resolve) => require(['../views/mainpage/map/echartsMinage.vue'], resolve),
             },
@@ -89,6 +94,7 @@ const pagerouters = [
                 meta: {
                     title: 'GeoGlobe迁徙',
                     bottom: false,
+                    icon: 'iconfont icon-qianxitu',
                 },
                 component: (resolve) => require(['../views/mainpage/map/geoGMinage.vue'], resolve),
             },
@@ -98,15 +104,27 @@ const pagerouters = [
                 meta: {
                     title: '其他',
                     bottom: true,
+                    icon: 'iconfont icon-qita',
                 },
                 component: (resolve) => require(['../views/mainpage/componentPage/other.vue'], resolve),
+            },
+            {
+                path: '3dGlobe',
+                // name: 'echartsMinage',
+                meta: {
+                    title: '三维地球',
+                    bottom: false,
+                    icon: 'iconfont icon-Dqianxitu',
+                },
+                component: (resolve) => require(['../views/mainpage/3dmap/3dmigrationMap.vue'], resolve),
             },
             {
                 path: '3dmigrationMap',
                 // name: 'echartsMinage',
                 meta: {
-                    title: 'echarts迁徙',
+                    title: '三维迁徙',
                     bottom: false,
+                    icon: 'iconfont icon-Dqianxitu',
                 },
                 component: (resolve) => require(['../views/mainpage/3dmap/3dmigrationMap.vue'], resolve),
             },
