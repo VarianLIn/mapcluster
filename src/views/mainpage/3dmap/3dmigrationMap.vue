@@ -1,221 +1,88 @@
-
 <template>
-    <div class="threemigra" id="threemigra" :style="pageSize"></div>
+    <div class="3dmigration" id="threedmigration" :style="mapsize"></div>
 </template>
+
 <script>
 /* eslint-disable no-undef */
 /*eslint-disable no-unused-vars*/
-import { initMap, initMapopera, convertData } from "../../../render.js";
-
-let map = null;
-
+import { getMapSize } from "../../../render.js";
 export default {
     name: "",
     data() {
         return {
-            magfg: {
-                isTDT: false,
-                host: window.location.host,
-                projectName: window.location.pathname.split("/")[1],
-                style: {
-                    version: 8,
-                    sources: {
-                        cartodb: {
-                            type: "raster",
-                            tiles: [
-                                "http://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-                            ],
-                            tileSize: 256,
-                        },
-                    },
-                    layers: [
-                        {
-                            id: "1",
-                            type: "raster",
-                            source: "cartodb",
-                        },
-                    ],
-                },
-                lnglatlv: { lng: 114.345, lat: 30.675, lv: 9 },
-            },
-            pageSize: {
+            mapsize: {
                 height: "",
             },
         };
     },
-    computed: {},
     created() {
-        this.getSize();
+        this.mapsize.height = getMapSize();
     },
     mounted() {
-        // map = null;
-        map = initMap("threemigra", this.magfg);
-        initMapopera(map, this.magfg.lnglatlv);
-        this.minagtion();
+        this.init();
     },
     methods: {
-        getSize() {
-            this.pageSize.height = window.innerHeight - 70 + "px";
+        init() {
+            var viewer = new Cesium.Map("threedmigration");
+
+            var layer = new Cesium.MapboxImageryProvider({
+                // mapId: "mapbox.dark",
+                // accessToken:
+                //     "pk.eyJ1IjoidmFyaWFubGluIiwiYSI6ImNrY3EyNzUwYTEwczAycmx1Zzc5dTlkM20ifQ.NE25cXftMqiajLsD5sqHkg",
+                url:
+                    "http://b.basemaps.cartocdn.com/spotify_dark/{z}/{x}/{y}.png",
+                accessToken:
+                    "pk.eyJ1IjoidmFyaWFubGluIiwiYSI6ImNrY3EyNzUwYTEwczAycmx1Zzc5dTlkM20ifQ.NE25cXftMqiajLsD5sqHkg",
+                styleId: "ck5290o2z121u1cle7mdtfmdk",
+            });
+
+            viewer.imageryLayers.addImageryProvider(layer);
+
+            //设置最大俯仰角，[-90,0]区间内，默认为-30，单位弧度
+            viewer.scene.screenSpaceCameraController.constrainedPitch = Cesium.Math.toRadians(
+                -30
+            );
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(
+                    114.345,
+                    30.675,
+                    1000000
+                ),
+            });
+
+            var data = [
+                {
+                    //飞线路径：起始点，终结点
+                    posititons: [
+                        [114.345, 30.675, 489.1],
+                        [108.96087018650488, 34.219774276548435, 424.7],
+                    ],
+                    color: new Cesium.Color(1.0, 0.0, 0.0, 1.0),
+                    width: 2.0,
+                    duration: 4,
+                },
+            ]; // data
+
+            var odLine = new Cesium.GeoODLine({
+                viewer: viewer,
+                data: data,
+                playing: true,
+                sampleMaxHeight: 30000, //抛物线的采样最大高程，越大，抛物线越高
+                sampleMaxPoint: 50, //抛物线的采样最多点数据量
+                isParabola: true,
+            }); // odline
         },
-
-        minagtion() {
-            this.$http({
-                // url: require("../../static/json/minage.json"),
-                url: "static/json/minage.json",
-                method: "get",
-            }).then(({ data }) => {
-                let migData = data[1].data;
-                let geoData = data[0].data;
-
-                var convertData = function (cdata) {
-                    var res = [];
-                    for (var i = 0; i < cdata.length; i++) {
-                        var dataItem = cdata[i];
-                        var fromCoord = geoData[dataItem[0].name];
-                        var toCoord = geoData[dataItem[1].name];
-                        if (fromCoord && toCoord) {
-                            // res.push([
-                            //     {
-                            //         coord: fromCoord,
-                            //     },
-                            //     {
-                            //         coord: toCoord,
-                            //     },
-                            // ]);
-                            res.push({
-                                fromName: dataItem[0].name,
-                                toName: dataItem[1].name,
-                                coords: [fromCoord, toCoord],
-                            });
-                        }
-                    }
-                    return res;
-                }; //converdata
-
-                var series = [];
-                var planePath = "";
-                series.push(
-                    {
-                        name: "t1",
-                        coordinateSystem: "GLMap",
-                        type: "lines",
-                        zlevel: 1,
-                        effect: {
-                            show: true,
-                            period: 6,
-                            trailLength: 0.7,
-                            color: "#fff",
-                            symbolSize: 3,
-                        },
-                        lineStyle: {
-                            normal: {
-                                color: "#a6c84c",
-                                width: 0,
-                                curveness: 0.2,
-                            },
-                        },
-                        data: convertData(migData),
-                    },
-                    {
-                        name: "t1",
-                        coordinateSystem: "GLMap",
-                        type: "lines",
-                        zlevel: 2,
-                        effect: {
-                            show: true,
-                            period: 6,
-                            trailLength: 0,
-                            symbol: planePath,
-                            symbolSize: 15,
-                        },
-                        lineStyle: {
-                            normal: {
-                                color: "#a6c84c",
-                                width: 1,
-                                opacity: 0.4,
-                                curveness: 0.2,
-                            },
-                        },
-                        data: convertData(migData),
-                    },
-                    {
-                        name: "t1",
-                        type: "effectScatter",
-                        coordinateSystem: "GLMap",
-                        zlevel: 2,
-                        rippleEffect: {
-                            brushType: "stroke",
-                        },
-                        label: {
-                            normal: {
-                                show: true,
-                                position: "right",
-                                formatter: "{b}",
-                            },
-                        },
-                        symbolSize: function (val) {
-                            return val[2] / 8;
-                        },
-                        itemStyle: {
-                            normal: {
-                                color: "#a6c84c",
-                            },
-                        },
-                        data: migData.map(function (dataItem) {
-                            return {
-                                name: dataItem[1].name,
-                                value: geoData[dataItem[1].name].concat([
-                                    dataItem[1].value,
-                                ]),
-                            };
-                        }),
-                    }
-                ); // series
-                // console.log(series);
-
-                let option = {
-                    GLMap: {
-                        roam: true,
-                    },
-                    coordinateSystem: "GLMap",
-                    title: {},
-                    tooltip: {
-                        trigger: "item",
-                    },
-                    legend: {},
-                    geo: {
-                        map: "GLMap",
-                        label: {
-                            emphasis: {
-                                show: false,
-                            },
-                        },
-                        roam: true,
-                        itemStyle: {
-                            normal: {
-                                areaColor: "#323c48",
-                                borderColor: "#404a59",
-                            },
-                            emphasis: {
-                                areaColor: "#2a333d",
-                            },
-                        },
-                    },
-                    series: series,
-                };
-
-                var echartslayer = new EchartsLayer(map);
-                echartslayer.chart.setOption(option);
-            }); // $http
-        },
-    }, //methods
+    },
 };
 </script>
+
 <style lang="less">
-#threemigra {
-    /* height: 900px; */
+#threedmigration {
+    position: absolute;
     width: 100%;
-    background: cornsilk;
-    margin: 0 auto;
-    position: relative;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
 }
+</style>

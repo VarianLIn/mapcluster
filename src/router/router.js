@@ -116,7 +116,7 @@ const pagerouters = [
                     bottom: false,
                     icon: 'iconfont icon-Dqianxitu',
                 },
-                component: (resolve) => require(['../views/mainpage/3dmap/3dmigrationMap.vue'], resolve),
+                component: (resolve) => require(['../views/mainpage/3dmap/3dGlobe.vue'], resolve),
             },
             {
                 path: '3dmigrationMap',

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <!-- <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0" /> -->
+        <!-- <link rel="icon" href="<%= BASE_URL %>favicon.ico" /> -->
+        <!-- <title><%= htmlWebpackPlugin.options.title %></title> -->
+        <title>Map Base</title>
+        <link rel="icon" href="./static/jpg/取消.png" />
+        <link rel="stylesheet" href="./static/css/mapbox-gl.css" type="text/css" />
+        <script type="text/javascript" src="./static/js/mapbox-gl.js"></script>
+        <script type="text/javascript" src="./static/js/GeoGlobeJS.min.js"></script>
+        <script type="text/javascript" src="./static/js/echarts-all-3.js"></script>
+        <script type="text/javascript" src="./static/js/EchartsLayer.js"></script>
+        <script type="text/javascript" src="./static/js/stats.min.js"></script>
+        <!-- <script type="text/javascript" src="./static/Cesium152/Cesium.js"></script>
+        <script type="text/javascript" src="./static/Cesium152/Cesium_ext_min.js"></script>
+        <script type="text/javascript" src="./static/Cesium152/Cesium_GGS_min.js"></script>
+        <link rel="stylesheet" href="./static/Cesium152/Widgets/widgets.css" type="text/css" /> -->
+        <script type="text/javascript" src="./static/CesiumAPI/Cesium.js"></script>
+        <script type="text/javascript" src="./static/CesiumAPI/Cesium_ext_min.js"></script>
+        <!-- <script type="text/javascript" src="./static/CesiumAPI/Cesium_GGS_min.js"></script> -->
+        <link rel="stylesheet" href="./static/CesiumAPI/Widgets/widgets.css" type="text/css" />
+        <!-- <script type="text/javascript" src="./static/Cesium14/Cesium.js"></script>
+        <script type="text/javascript" src="./static/Cesium14/Cesium_ext_min.js"></script>
+        <link rel="stylesheet" href="./static/Cesium14/Widgets/widgets.css" type="text/css" /> -->
+        <script type="text/javascript" src="./static/gui/dat.gui.min.js"></script>
+        <style>
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            #cesiumContainer {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+            }
+            #gui {
+                position: fixed;
+                left: 0%;
+                bottom: 20%;
+                /* width: 200px;
+                height: 500px; */
+            }
+        </style>
+    </head>
+    <body>
+        <div id="cesiumContainer"></div>
+
+        <script>
+            var Cfg = {};
+            //系统主机IP地址
+            Cfg.host = window.location.host;
+            //项目名称
+            Cfg.projectName = window.location.pathname.split('/')[1];
+            //代理服务地址
+            Cfg.proxyHostUrl = 'http://' + Cfg.host + '/' + Cfg.projectName + '/proxy?url=';
+            //设置代理
+            GeoGlobe.Request.setProxyHost(Cfg.proxyHostUrl);
+
+            var viewModel = {
+                    添加抛物飞线图层: addODLineFlyLayer,
+                    添加地面轨迹图层: addODLineGroundLayer,
+                    添加垂直轨迹线图层: addODLineVerticalLayer,
+                    清除图层: clearAll,
+                },
+                gui = new dat.GUI({
+                    // width: 300,
+                    // autoPlace: false,
+                });
+            gui.domElement.id = 'gui';
+            gui.add(viewModel, '添加抛物飞线图层');
+            gui.add(viewModel, '添加地面轨迹图层');
+            gui.add(viewModel, '添加垂直轨迹线图层');
+            gui.add(viewModel, '清除图层');
+
+            let viewer = initView();
+
+            //自定义块数据数据源类，继承自GeoDataSource
+            class BlockDataSource extends Cesium.GeoDataSource {
+                //设置效果图层动画类型
+                setLayerType(type) {
+                    this._layerType = type;
+                }
+
+                //重写数据解析方法
+                conversionData() {
+                    let data = this._data;
+                    let features = this._conversionChildData(data.data);
+                    this._features = features;
+                }
+
+                //解析服务端所属区域数据
+                _conversionChildData(data) {
+                    var featues = [];
+                    var { chirdAreaInfo } = data;
+                    for (let i = 0; i < chirdAreaInfo.length; i++) {
+                        var child = chirdAreaInfo[i];
+                        var geometry = child._source.areainfo;
+                        var fs = this._conversionFeatures(geometry, child._source);
+                        featues = featues.concat(fs);
+                    }
+                    return featues;
+                }
+
+                //将服务端数据转换成对应的GeoJSON格式要素数组
+                _conversionFeatures(geometry, feature) {
+                    if (this._layerType == 'ODLineGround') {
+                        return this._conversionFeaturesForODLineGround(geometry, feature);
+                    }
+
+                    if (this._layerType == 'ODLineFly') {
+                        return this._conversionFeaturesForODLineFly(geometry, feature);
+                    }
+
+                    if (this._layerType == 'ODLineVertical') {
+                        return this._conversionFeaturesForODLineVertical(geometry, feature);
+                    }
+                }
+
+                _conversionFeaturesForODLineVertical(geometry, feature) {
+                    let features = [];
+                    features.push({
+                        type: 'Feature',
+                        properties: feature, //附加服务端获取的外部数据
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [
+                                [feature.lon, feature.lat, 0],
+                                [feature.lon, feature.lat, 2000],
+                            ], //geometry.coordinates[i][0]
+                        },
+                    });
+                    return features;
+                }
+
+                _conversionFeaturesForODLineFly(geometry, feature) {
+                    let features = [];
+                    features.push({
+                        type: 'Feature',
+                        properties: feature, //附加服务端获取的外部数据
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [
+                                [feature.lon, feature.lat],
+                                [113.89476454, 22.57188351],
+                            ], //geometry.coordinates[i][0]
+                        },
+                    });
+                    return features;
+                }
+
+                _conversionFeaturesForODLineGround(geometry, feature) {
+                    let features = [];
+                    if (geometry.type == 'MultiPolygon') {
+                        for (let i = 0; i < geometry.coordinates.length; i++) {
+                            features.push({
+                                type: 'Feature',
+                                properties: feature, //附加服务端获取的外部数据
+                                geometry: {
+                                    type: 'LineString',
+                                    coordinates: geometry.coordinates[i][0],
+                                },
+                            });
+                        }
+                    }
+                    if (geometry.type == 'Polygon' || geometry.type == 'LineString') {
+                        features.push({
+                            type: 'Feature',
+                            properties: feature,
+                            geometry: {
+                                type: 'LineString',
+                                coordinates: geometry.coordinates[0],
+                            },
+                        });
+                    }
+                    return features;
+                }
+
+                //生成当前所有要素的最大地理范围
+                getFeatureRectangle(features) {
+                    // var features = this._features;
+                    if (!features || features.length == 0) {
+                        return null;
+                    }
+                    var west = 180,
+                        south = 90,
+                        east = -180,
+                        north = -90; //Cesium.Rectangle()
+                    for (let i = 0; i < features.length; i++) {
+                        var {
+                            geometry: {
+                                coordinates: [coordinates],
+                            },
+                        } = features[i];
+                        if (west > coordinates[0]) {
+                            west = coordinates[0];
+                        }
+                        if (east < coordinates[0]) {
+                            east = coordinates[0];
+                        }
+                        if (south > coordinates[1]) {
+                            south = coordinates[1];
+                        }
+                        if (north < coordinates[1]) {
+                            north = coordinates[1];
+                        }
+                    }
+                    return Cesium.Rectangle.fromDegrees(west, south, east, north);
+                }
+            }
+
+            //生成数源实例
+            let dataSource = new BlockDataSource({
+                url: 'http://58.250.156.18:8088/ksj_api/common_api/getAreaBase',
+            });
+
+            addODLineFlyLayer();
+
+            function addODLineFlyLayer() {
+                clearAll();
+                //纹理环绕特效图层类
+                var effectLayer = new Cesium.GeoODLineEffectLayer({
+                    dataSource: dataSource,
+                    effectType: 'ODLineFly',
+                    width: 5,
+                    duration: 20,
+                });
+
+                viewer.on('click', function(e) {
+                    if (e.originalLayer === effectLayer) {
+                        let {
+                            feature: { properties },
+                        } = e;
+                        alert('你点击的是' + properties.parentname + properties.areaname);
+                    }
+                });
+
+                //添加到地图/地球上
+                viewer.effectLayers.add(effectLayer);
+
+                //设置服务端查询请求过滤参数
+                dataSource.setFilter({
+                    token: '3086dae859bb41a4ab8855e827ed0747',
+                    paramCodeList: 'KJ5001',
+                    areacode: '440303009',
+                });
+                dataSource.setLayerType('ODLineFly');
+
+                dataSource.load(function(result) {
+                    var features = dataSource.getFeatures();
+                    var rec = dataSource.getFeatureRectangle(features);
+
+                    viewer.camera.flyTo({
+                        destination: new Cesium.Cartesian3(-2386675.423860529, 5396939.179088281, 2478265.974743222),
+                        orientation: {
+                            heading: 2.55710455234761,
+                            pitch: -0.5226813704837219,
+                            roll: 0.000027255160381933763,
+                        },
+                    });
+                });
+            }
+
+            function addODLineVerticalLayer() {
+                clearAll();
+                //纹理环绕特效图层类
+                var effectLayer = new Cesium.GeoODLineEffectLayer({
+                    effectType: 'ODLineVertical',
+                    dataSource: dataSource,
+                    width: 5,
+                    duration: 20,
+                });
+
+                viewer.on('click', function(e) {
+                    if (e.originalLayer === effectLayer) {
+                        let {
+                            feature: { properties },
+                        } = e;
+                        alert('你点击的是' + properties.parentname + properties.areaname);
+                    }
+                });
+
+                //添加到地图/地球上
+                viewer.effectLayers.add(effectLayer);
+
+                //设置服务端查询请求过滤参数
+                dataSource.setFilter({
+                    token: '3086dae859bb41a4ab8855e827ed0747',
+                    paramCodeList: 'KJ5001',
+                    areacode: '440303009',
+                });
+                dataSource.setLayerType('ODLineVertical');
+
+                dataSource.load(function(result) {
+                    viewer.camera.flyTo({
+                        destination: new Cesium.Cartesian3(-2409396.2619690704, 5378481.7702247305, 2441352.1991676553),
+                        orientation: {
+                            heading: 2.812218957133307,
+                            pitch: -0.510274691445427,
+                            roll: 0.0008812885117928104,
+                        },
+                    });
+                });
+            }
+
+            function addODLineGroundLayer() {
+                clearAll();
+                //纹理环绕特效图层类
+                var effectLayer = new Cesium.GeoODLineEffectLayer({
+                    effectType: 'ODLineGround',
+                    dataSource: dataSource,
+                    width: 5,
+                    duration: 20,
+                });
+
+                viewer.on('click', function(e) {
+                    if (e.originalLayer === effectLayer) {
+                        let {
+                            feature: { properties },
+                        } = e;
+                        alert('你点击的是' + properties.parentname + properties.areaname);
+                    }
+                });
+
+                //添加到地图/地球上
+                viewer.effectLayers.add(effectLayer);
+
+                //设置服务端查询请求过滤参数
+                dataSource.setFilter({
+                    token: '3086dae859bb41a4ab8855e827ed0747',
+                    paramCodeList: 'KJ5001',
+                    areacode: '440303009',
+                });
+                dataSource.setLayerType('ODLineGround');
+                dataSource.load(function(result) {
+                    var features = dataSource.getFeatures();
+                    var rec = dataSource.getFeatureRectangle(features);
+                    viewer.camera.flyTo({
+                        destination: rec,
+                    });
+                });
+            }
+
+            function clearAll() {
+                viewer.effectLayers.removeAll();
+            }
+
+            function initView() {
+                //地球
+                let viewerEarth = new Cesium.Map('cesiumContainer', {
+                    infoBox: false,
+                    selectionIndicator: false,
+                });
+                //地形
+                let terrainUrls = [
+                    'https://t8.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
+                    'https://t9.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
+                    'https://t10.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
+                    'https://t11.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
+                    'https://t12.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
+                ];
+                let t_Provider = new Cesium.GeoTerrainProvider({
+                    dataType: Cesium.GeoTerrainProvider.INT,
+                    urls: terrainUrls,
+                });
+                viewerEarth.terrainProvider = t_Provider;
+                //天地图影像
+                viewerEarth.imageryLayers.remove(viewerEarth.imageryLayers.get(0));
+                let tdt = new Cesium.UrlTemplateImageryProvider({
+                    url: 'http://{s}.tianditu.com/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e90d56e5a09d1767899ad45846b0cefd',
+                    subdomains: ['t0', 't1', 't2', 't3', 't4', 't5', 't6', 't7'],
+                    maximumLevel: 18,
+                });
+                viewerEarth.imageryLayers.addImageryProvider(tdt);
+                return viewerEarth;
+            }
+        </script>
+
+        <!-- <script>
+            //代理配置
+            var Cfg = {};
+            //系统主机IP地址
+            Cfg.host = window.location.host;
+            //项目名称
+            Cfg.projectName = window.location.pathname.split('/')[1];
+            //代理服务地址
+            Cfg.proxyHostUrl = 'http://' + Cfg.host + '/' + Cfg.projectName + '/proxy?url=';
+
+            //初始化球体
+            var viewer = new Cesium.Map('cesiumContainer', {
+                infoBox: false,
+                selectionIndicator: false,
+            });
+            viewer.scene.highDynamicRange = true;
+            var bloom = viewer.scene.postProcessStages.bloom;
+            bloom.enabled = true;
+            bloom.glowOnly = false;
+            bloom.contrast = 119;
+            bloom.brightness = -0.4;
+            bloom.delta = 0.9;
+            bloom.sigma = 3.78;
+            bloom.stepSize = 5;
+            //添加天地图影像
+            var tdt = new Cesium.UrlTemplateImageryProvider({
+                url: 'http://{s}.tianditu.com/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e90d56e5a09d1767899ad45846b0cefd',
+                subdomains: ['t0', 't1', 't2', 't3', 't4', 't5', 't6', 't7'],
+                maximumLevel: 18,
+            });
+            viewer.imageryLayers.addImageryProvider(tdt);
+            //添加地形
+            // function addTerrainLayer() {
+            //     var TerrainUrls = [
+            //         'https://t8.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
+            //         'https://t9.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
+            //         'https://t10.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
+            //         'https://t11.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
+            //         'https://t12.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
+            //     ];
+            //     var t_Provider = new Cesium.GeoTerrainProvider({
+            //         urls: TerrainUrls,
+            //     });
+            //     viewer.terrainProvider = t_Provider;
+            // }
+            // addTerrainLayer();
+
+            var data = [
+                {
+                    //飞线路径：起始点，终结点
+                    posititons: [
+                        [108.95941461215891, 34.21977316226221, 489.1],
+                        [108.96087018650488, 34.219774276548435, 424.7],
+                    ],
+                    color: new Cesium.Color(1.0, 0.0, 0.0, 1.0),
+                    width: 2.0,
+                    duration: 4,
+                },
+                {
+                    posititons: [
+                        [108.95941461215891, 34.21977316226221, 489.1],
+                        [108.96097122668127, 34.2193674089985, 423.7],
+                    ],
+                    color: new Cesium.Color(1.0, 1.0, 0.0, 1.0),
+                    width: 2.0,
+                    duration: 6,
+                },
+                {
+                    posititons: [
+                        [108.95941461215891, 34.21977316226221, 489.1],
+                        [108.95971212997193, 34.21899045507531, 420.88],
+                    ],
+                    color: new Cesium.Color(1.0, 1.0, 0.0, 1.0),
+                    width: 2.0,
+                    duration: 2,
+                },
+                {
+                    posititons: [
+                        [108.95941461215891, 34.21977316226221, 489.1],
+                        [108.95875093137002, 34.219031045805956, 419.95],
+                    ],
+                    color: new Cesium.Color(1.0, 1.0, 1.0, 1.0),
+                    width: 2.0,
+                    duration: 3,
+                },
+                {
+                    posititons: [
+                        [108.95941461215891, 34.21977316226221, 489.1],
+                        [108.9587636841626, 34.21977580203969, 436.16],
+                    ],
+                    color: new Cesium.Color(1.0, 1.0, 0.0, 1.0),
+                    width: 2.0,
+                    duration: 9,
+                },
+                {
+                    posititons: [
+                        [108.95941461215891, 34.21977316226221, 489.1],
+                        [108.95908522433295, 34.22051160392499, 424.78],
+                    ],
+                    color: new Cesium.Color(1.0, 1.0, 0.0, 1.0),
+                    width: 2.0,
+                    duration: 7,
+                },
+                {
+                    posititons: [
+                        [108.95941461215891, 34.21977316226221, 489.1],
+                        [108.95908788570553, 34.21953809086321, 425.05],
+                    ],
+                    color: new Cesium.Color(1.0, 0, 1.0, 1.0),
+                    width: 2.0,
+                    duration: 2,
+                },
+                {
+                    posititons: [
+                        [108.95941461215891, 34.21977316226221, 489.1],
+                        [108.96018742572704, 34.22021197909346, 424.79],
+                    ],
+                    color: new Cesium.Color(0, 1.0, 0.5, 1.0),
+                    width: 2.0,
+                    duration: 5,
+                },
+            ];
+            //抛物飞线
+            var odLine = new Cesium.GeoODLine({
+                viewer: viewer,
+                data: data,
+                playing: true,
+                sampleMaxHeight: 30000, //抛物线的采样最大高程，越大，抛物线越高
+                sampleMaxPoint: 50, //抛物线的采样最多点数据量
+                isParabola: true,
+            });
+
+            var data2 = [
+                {
+                    posititons: [
+                        [108.95927463525702, 34.21964581827711, 431],
+                        [108.9595749800808, 34.219645631175375, 431],
+                        [108.95958308696105, 34.21989488853628, 431],
+                        [108.95927935614142, 34.21989384150332, 431],
+                        [108.95927463525702, 34.21964581827711, 431],
+                    ],
+                    color: Cesium.Color.RED,
+                    width: 2.0,
+                    duration: 2,
+                },
+                {
+                    posititons: [
+                        [108.95927463525702, 34.21964581827711, 431],
+                        [108.9595749800808, 34.219645631175375, 431],
+                        [108.95958308696105, 34.21989488853628, 431],
+                        [108.95927935614142, 34.21989384150332, 431],
+                        [108.95927463525702, 34.21964581827711, 431],
+                    ],
+                    color: Cesium.Color.SPRINGGREEN,
+                    width: 2.0,
+                    duration: 1,
+                },
+                {
+                    posititons: [
+                        [108.95927463525702, 34.21964581827711, 431],
+                        [108.9595749800808, 34.219645631175375, 431],
+                        [108.95958308696105, 34.21989488853628, 431],
+                        [108.95927935614142, 34.21989384150332, 431],
+                        [108.95927463525702, 34.21964581827711, 431],
+                    ],
+                    color: Cesium.Color.VIOLET,
+                    width: 2.0,
+                    duration: 0.6,
+                },
+                {
+                    posititons: [
+                        [108.95929563361064, 34.21966376174005, 440],
+                        [108.9592981520959, 34.21988190792008, 440],
+                        [108.95956355809861, 34.219879945328906, 440],
+                        [108.95956076863591, 34.21966186491686, 440],
+                        [108.95929563361064, 34.21966376174005, 440],
+                    ],
+                    color: Cesium.Color.YELLOW,
+                    width: 2.0,
+                    duration: 1.5,
+                },
+                {
+                    posititons: [
+                        [108.95929563361064, 34.21966376174005, 440],
+                        [108.9592981520959, 34.21988190792008, 440],
+                        [108.95956355809861, 34.219879945328906, 440],
+                        [108.95956076863591, 34.21966186491686, 440],
+                        [108.95929563361064, 34.21966376174005, 440],
+                    ],
+                    color: Cesium.Color.PERU,
+                    width: 2.0,
+                    duration: 0.8,
+                },
+            ];
+            //地面轨迹线
+            var odLine2 = new Cesium.GeoODLine({
+                viewer: viewer,
+                data: data2,
+                playing: true,
+                isParabola: false,
+            });
+        </script> -->
+    </body>
+</html>
