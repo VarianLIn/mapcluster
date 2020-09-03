@@ -48,7 +48,6 @@ export default {
             //         "http://{s}.tianditu.com/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e90d56e5a09d1767899ad45846b0cefd",
             //     subdomains: ["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7"],
             // });
-
             //加载天地图经纬度的全球影像
             // var tdt = new Cesium.UrlTemplateImageryProvider({
             // 	url: "http://{s}.tianditu.com/DataServer?T=img_c&x={x}&y={y}&l={z}&tk=e90d56e5a09d1767899ad45846b0cefd",
@@ -76,29 +75,109 @@ export default {
             //     -30
             // );
 
-            var viewModel = {
-                x: 0,
-            };
-            gui = new dat.GUI({});
-            var f = gui.addFolder("视图控制");
+            // var viewModel = {
+            //     x: 0,
+            // };
+            // gui = new dat.GUI({});
+            // var f = gui.addFolder("视图控制");
 
-            gui.domElement.id = "gui";
+            // gui.domElement.id = "gui";
 
-            f.add(viewModel, "x", 0, 10, 0.001);
-            f.open();
-
-            viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(
-                    114.95941461215891,
-                    30.21977316226221,
-                    1000000
-                ),
-                orientation: {
-                    heading: viewModel.x,
-                    pitch: -0.510274691445427,
-                    roll: 0.0008812885117928104,
-                },
+            // f.add(viewModel, "x", 0, 10, 0.001).onChange(function (value) {
+            //     // console.log(value);
+            // });
+            // f.open();
+            var dynamicCylinder = new Cesium.GeoDynamicCylinder({
+                viewer: viewer,
+                center: [108.9587516378286, 34.21978169947116, 0],
+                particlesColor: Cesium.Color.GOLD,
+                cylinderColor: Cesium.Color.GOLD,
+                length: 100,
+                topRadius: 8,
+                bottomRadius: 10,
+                particlesImageUrl: "./static/jpg/取消.png",
             });
+            // viewer.camera.flyTo({
+            //     destination: Cesium.Cartesian3.fromDegrees(
+            //         108.9587516378286,
+            //         34.21978169947116,
+            //         450
+            //     ),
+            //     orientation: {
+            //         heading: 0,
+            //         pitch: -1,
+            //         roll: 0.0008812885117928104,
+            //     },
+            // });
+            viewer.zoomTo([108.9587516378286, 34.21978169947116, 450]);
+            // //得到当前三维场景
+            // var scene = viewer.scene;
+            // //得到当前三维场景的椭球体
+            // var ellipsoid = scene.globe.ellipsoid;
+            // var longitudeString = null;
+            // var latitudeString = null;
+            // var height = null;
+            // var cartesian = null;
+
+            // var handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+            // console.log(handler);
+            // //获取鼠标点击时的坐标
+            // getPosition(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            // function getPosition(actionType) {
+            //     //移除所有事件
+            //     handler.removeInputAction(
+            //         Cesium.ScreenSpaceEventType.LEFT_CLICK
+            //     );
+            //     handler.removeInputAction(
+            //         Cesium.ScreenSpaceEventType.MIDDLE_CLICK
+            //     );
+            //     handler.removeInputAction(
+            //         Cesium.ScreenSpaceEventType.RIGHT_CLICK
+            //     );
+            //     handler.removeInputAction(Cesium.ScreenSpaceEventType.WHEEL);
+            //     if (actionType !== Cesium.ScreenSpaceEventType.WHEEL) {
+            //         //设置鼠标点击事件的处理函数，这里负责监听x,y坐标值变化
+            //         handler.setInputAction(function (click) {
+            //             //通过指定的椭球或者地图对应的坐标系，将鼠标的二维坐标转换为对应椭球体三维坐标
+            //             cartesian = viewer.camera.pickEllipsoid(
+            //                 click.position,
+            //                 ellipsoid
+            //             );
+            //             //将笛卡尔坐标转换为地理坐标
+            //             var cartographic = ellipsoid.cartesianToCartographic(
+            //                 cartesian
+            //             );
+            //             //将弧度转为度的十进制度表示
+            //             longitudeString = Cesium.Math.toDegrees(
+            //                 cartographic.longitude
+            //             );
+            //             latitudeString = Cesium.Math.toDegrees(
+            //                 cartographic.latitude
+            //             );
+            //             //获取相机高度
+            //             height = Math.ceil(
+            //                 viewer.camera.positionCartographic.height
+            //             );
+            //             positionInfo.setValue(
+            //                 longitudeString.toFixed(3) +
+            //                     "," +
+            //                     latitudeString.toFixed(3) +
+            //                     "," +
+            //                     height.toFixed(3)
+            //             );
+            //         }, actionType);
+            //     } else {
+            //         //设置鼠标滚动事件的处理函数，这里负责监听高度值变化
+            //         handler.setInputAction(function (wheelment) {
+            //             height = Math.ceil(
+            //                 viewer.camera.positionCartographic.height
+            //             );
+            //             positionInfo.setValue(
+            //                 "事件触发时相机高度：" + height.toFixed(3) + "m"
+            //             );
+            //         }, actionType);
+            //     }
+            // } //getposition
         }, // init
 
         // addgui() {

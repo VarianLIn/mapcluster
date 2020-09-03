@@ -259,14 +259,23 @@
                     viewer.camera.flyTo({
                         destination: new Cesium.Cartesian3(-2386675.423860529, 5396939.179088281, 2478265.974743222),
                         orientation: {
-                            heading: 2.55710455234761,
-                            pitch: -0.5226813704837219,
-                            roll: 0.000027255160381933763,
+                            heading: Cesium.Math.toRadians(0.0),
+                            pitch: Cesium.Math.toRadians(-70.0),
+                            roll: 0,
                         },
                     });
                 });
             }
-
+            var dynamicCylinder = new Cesium.GeoDynamicCylinder({
+                viewer: viewer,
+                center: [108.9587516378286, 34.21978169947116, 450],
+                particlesColor: Cesium.Color.GOLD,
+                cylinderColor: Cesium.Color.GOLD,
+                length: 1000000,
+                topRadius: 800,
+                bottomRadius: 8000,
+                // particlesImageUrl: './static/jpg/虫.png',
+            });
             function addODLineVerticalLayer() {
                 clearAll();
                 //纹理环绕特效图层类
@@ -301,8 +310,8 @@
                     viewer.camera.flyTo({
                         destination: new Cesium.Cartesian3(-2409396.2619690704, 5378481.7702247305, 2441352.1991676553),
                         orientation: {
-                            heading: 2.812218957133307,
-                            pitch: -0.510274691445427,
+                            heading: 2112.812218957133307,
+                            pitch: -110.510274691445427,
                             roll: 0.0008812885117928104,
                         },
                     });
