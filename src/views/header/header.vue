@@ -26,6 +26,19 @@
                     </MenuItem>
                 </MenuGroup>
             </Submenu>
+            <Submenu name="Charts">
+                <template slot="title">
+                    <Icon custom="iconfont icon-qita"></Icon>图表
+                </template>
+                <MenuGroup title="Charts">
+                    <MenuItem name="echarts">
+                        <Icon custom="iconfont icon-qita"></Icon>echart3d柱形图
+                    </MenuItem>
+                    <MenuItem name="d3chart">
+                        <Icon custom="iconfont icon-qita"></Icon>d3图表
+                    </MenuItem>
+                </MenuGroup>
+            </Submenu>
             <MenuItem name="other">
                 <Icon custom="iconfont icon-qita"></Icon>其他
             </MenuItem>

@@ -128,6 +128,26 @@ const pagerouters = [
                 },
                 component: (resolve) => require(['../views/mainpage/3dmap/3dmigrationMap.vue'], resolve),
             },
+            {
+                path: 'echarts',
+                // name: 'echartsMinage',
+                meta: {
+                    title: 'eChart',
+                    bottom: true,
+                    icon: 'iconfont icon-qita',
+                },
+                component: (resolve) => require(['../views/mainpage/charts/chart_1.vue'], resolve),
+            },
+            {
+                path: 'd3chart',
+                // name: 'echartsMinage',
+                meta: {
+                    title: 'd3Chart',
+                    bottom: true,
+                    icon: 'iconfont icon-qita',
+                },
+                component: (resolve) => require(['../views/mainpage/charts/d3chart.vue'], resolve),
+            },
         ],
     },
 ];

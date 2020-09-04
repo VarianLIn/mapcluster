@@ -7,6 +7,8 @@ import 'view-design/dist/styles/iview.css';
 import BaiduMap from 'vue-baidu-map';
 import axios from 'axios';
 import { router } from './router/index';
+// import echarts from 'echarts';
+import 'echarts-gl';
 
 // Vue.use(axios);
 Vue.prototype.$http = axios;

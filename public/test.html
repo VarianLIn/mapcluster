@@ -12,8 +12,10 @@
         <script type="text/javascript" src="./static/js/mapbox-gl.js"></script>
         <script type="text/javascript" src="./static/js/GeoGlobeJS.min.js"></script>
         <script type="text/javascript" src="./static/js/echarts-all-3.js"></script>
+        <script type="text/javascript" src="./static/js/echarts.min.js"></script>
         <script type="text/javascript" src="./static/js/EchartsLayer.js"></script>
         <script type="text/javascript" src="./static/js/stats.min.js"></script>
+        <script type="text/javascript" src="./static/js/d3.min.js"></script>
         <!-- <script type="text/javascript" src="./static/Cesium152/Cesium.js"></script>
         <script type="text/javascript" src="./static/Cesium152/Cesium_ext_min.js"></script>
         <script type="text/javascript" src="./static/Cesium152/Cesium_GGS_min.js"></script>
@@ -39,6 +41,7 @@
                 margin: 0;
                 padding: 0;
                 overflow: hidden;
+                background-color: #eee;
             }
             #gui {
                 position: fixed;
@@ -53,545 +56,501 @@
         <div id="cesiumContainer"></div>
 
         <script>
-            var Cfg = {};
-            //系统主机IP地址
-            Cfg.host = window.location.host;
-            //项目名称
-            Cfg.projectName = window.location.pathname.split('/')[1];
-            //代理服务地址
-            Cfg.proxyHostUrl = 'http://' + Cfg.host + '/' + Cfg.projectName + '/proxy?url=';
-            //设置代理
-            GeoGlobe.Request.setProxyHost(Cfg.proxyHostUrl);
-
-            var viewModel = {
-                    添加抛物飞线图层: addODLineFlyLayer,
-                    添加地面轨迹图层: addODLineGroundLayer,
-                    添加垂直轨迹线图层: addODLineVerticalLayer,
-                    清除图层: clearAll,
-                },
-                gui = new dat.GUI({
-                    // width: 300,
-                    // autoPlace: false,
-                });
-            gui.domElement.id = 'gui';
-            gui.add(viewModel, '添加抛物飞线图层');
-            gui.add(viewModel, '添加地面轨迹图层');
-            gui.add(viewModel, '添加垂直轨迹线图层');
-            gui.add(viewModel, '清除图层');
-
-            let viewer = initView();
-
-            //自定义块数据数据源类，继承自GeoDataSource
-            class BlockDataSource extends Cesium.GeoDataSource {
-                //设置效果图层动画类型
-                setLayerType(type) {
-                    this._layerType = type;
-                }
-
-                //重写数据解析方法
-                conversionData() {
-                    let data = this._data;
-                    let features = this._conversionChildData(data.data);
-                    this._features = features;
-                }
-
-                //解析服务端所属区域数据
-                _conversionChildData(data) {
-                    var featues = [];
-                    var { chirdAreaInfo } = data;
-                    for (let i = 0; i < chirdAreaInfo.length; i++) {
-                        var child = chirdAreaInfo[i];
-                        var geometry = child._source.areainfo;
-                        var fs = this._conversionFeatures(geometry, child._source);
-                        featues = featues.concat(fs);
-                    }
-                    return featues;
-                }
-
-                //将服务端数据转换成对应的GeoJSON格式要素数组
-                _conversionFeatures(geometry, feature) {
-                    if (this._layerType == 'ODLineGround') {
-                        return this._conversionFeaturesForODLineGround(geometry, feature);
-                    }
-
-                    if (this._layerType == 'ODLineFly') {
-                        return this._conversionFeaturesForODLineFly(geometry, feature);
-                    }
-
-                    if (this._layerType == 'ODLineVertical') {
-                        return this._conversionFeaturesForODLineVertical(geometry, feature);
-                    }
-                }
-
-                _conversionFeaturesForODLineVertical(geometry, feature) {
-                    let features = [];
-                    features.push({
-                        type: 'Feature',
-                        properties: feature, //附加服务端获取的外部数据
-                        geometry: {
-                            type: 'LineString',
-                            coordinates: [
-                                [feature.lon, feature.lat, 0],
-                                [feature.lon, feature.lat, 2000],
-                            ], //geometry.coordinates[i][0]
-                        },
-                    });
-                    return features;
-                }
-
-                _conversionFeaturesForODLineFly(geometry, feature) {
-                    let features = [];
-                    features.push({
-                        type: 'Feature',
-                        properties: feature, //附加服务端获取的外部数据
-                        geometry: {
-                            type: 'LineString',
-                            coordinates: [
-                                [feature.lon, feature.lat],
-                                [113.89476454, 22.57188351],
-                            ], //geometry.coordinates[i][0]
-                        },
-                    });
-                    return features;
-                }
-
-                _conversionFeaturesForODLineGround(geometry, feature) {
-                    let features = [];
-                    if (geometry.type == 'MultiPolygon') {
-                        for (let i = 0; i < geometry.coordinates.length; i++) {
-                            features.push({
-                                type: 'Feature',
-                                properties: feature, //附加服务端获取的外部数据
-                                geometry: {
-                                    type: 'LineString',
-                                    coordinates: geometry.coordinates[i][0],
-                                },
-                            });
-                        }
-                    }
-                    if (geometry.type == 'Polygon' || geometry.type == 'LineString') {
-                        features.push({
-                            type: 'Feature',
-                            properties: feature,
-                            geometry: {
-                                type: 'LineString',
-                                coordinates: geometry.coordinates[0],
-                            },
-                        });
-                    }
-                    return features;
-                }
-
-                //生成当前所有要素的最大地理范围
-                getFeatureRectangle(features) {
-                    // var features = this._features;
-                    if (!features || features.length == 0) {
-                        return null;
-                    }
-                    var west = 180,
-                        south = 90,
-                        east = -180,
-                        north = -90; //Cesium.Rectangle()
-                    for (let i = 0; i < features.length; i++) {
-                        var {
-                            geometry: {
-                                coordinates: [coordinates],
-                            },
-                        } = features[i];
-                        if (west > coordinates[0]) {
-                            west = coordinates[0];
-                        }
-                        if (east < coordinates[0]) {
-                            east = coordinates[0];
-                        }
-                        if (south > coordinates[1]) {
-                            south = coordinates[1];
-                        }
-                        if (north < coordinates[1]) {
-                            north = coordinates[1];
-                        }
-                    }
-                    return Cesium.Rectangle.fromDegrees(west, south, east, north);
-                }
-            }
-
-            //生成数源实例
-            let dataSource = new BlockDataSource({
-                url: 'http://58.250.156.18:8088/ksj_api/common_api/getAreaBase',
-            });
-
-            addODLineFlyLayer();
-
-            function addODLineFlyLayer() {
-                clearAll();
-                //纹理环绕特效图层类
-                var effectLayer = new Cesium.GeoODLineEffectLayer({
-                    dataSource: dataSource,
-                    effectType: 'ODLineFly',
-                    width: 5,
-                    duration: 20,
-                });
-
-                viewer.on('click', function(e) {
-                    if (e.originalLayer === effectLayer) {
-                        let {
-                            feature: { properties },
-                        } = e;
-                        alert('你点击的是' + properties.parentname + properties.areaname);
-                    }
-                });
-
-                //添加到地图/地球上
-                viewer.effectLayers.add(effectLayer);
-
-                //设置服务端查询请求过滤参数
-                dataSource.setFilter({
-                    token: '3086dae859bb41a4ab8855e827ed0747',
-                    paramCodeList: 'KJ5001',
-                    areacode: '440303009',
-                });
-                dataSource.setLayerType('ODLineFly');
-
-                dataSource.load(function(result) {
-                    var features = dataSource.getFeatures();
-                    var rec = dataSource.getFeatureRectangle(features);
-
-                    viewer.camera.flyTo({
-                        destination: new Cesium.Cartesian3(-2386675.423860529, 5396939.179088281, 2478265.974743222),
-                        orientation: {
-                            heading: Cesium.Math.toRadians(0.0),
-                            pitch: Cesium.Math.toRadians(-70.0),
-                            roll: 0,
-                        },
-                    });
-                });
-            }
-            var dynamicCylinder = new Cesium.GeoDynamicCylinder({
-                viewer: viewer,
-                center: [108.9587516378286, 34.21978169947116, 450],
-                particlesColor: Cesium.Color.GOLD,
-                cylinderColor: Cesium.Color.GOLD,
-                length: 1000000,
-                topRadius: 800,
-                bottomRadius: 8000,
-                // particlesImageUrl: './static/jpg/虫.png',
-            });
-            function addODLineVerticalLayer() {
-                clearAll();
-                //纹理环绕特效图层类
-                var effectLayer = new Cesium.GeoODLineEffectLayer({
-                    effectType: 'ODLineVertical',
-                    dataSource: dataSource,
-                    width: 5,
-                    duration: 20,
-                });
-
-                viewer.on('click', function(e) {
-                    if (e.originalLayer === effectLayer) {
-                        let {
-                            feature: { properties },
-                        } = e;
-                        alert('你点击的是' + properties.parentname + properties.areaname);
-                    }
-                });
-
-                //添加到地图/地球上
-                viewer.effectLayers.add(effectLayer);
-
-                //设置服务端查询请求过滤参数
-                dataSource.setFilter({
-                    token: '3086dae859bb41a4ab8855e827ed0747',
-                    paramCodeList: 'KJ5001',
-                    areacode: '440303009',
-                });
-                dataSource.setLayerType('ODLineVertical');
-
-                dataSource.load(function(result) {
-                    viewer.camera.flyTo({
-                        destination: new Cesium.Cartesian3(-2409396.2619690704, 5378481.7702247305, 2441352.1991676553),
-                        orientation: {
-                            heading: 2112.812218957133307,
-                            pitch: -110.510274691445427,
-                            roll: 0.0008812885117928104,
-                        },
-                    });
-                });
-            }
-
-            function addODLineGroundLayer() {
-                clearAll();
-                //纹理环绕特效图层类
-                var effectLayer = new Cesium.GeoODLineEffectLayer({
-                    effectType: 'ODLineGround',
-                    dataSource: dataSource,
-                    width: 5,
-                    duration: 20,
-                });
-
-                viewer.on('click', function(e) {
-                    if (e.originalLayer === effectLayer) {
-                        let {
-                            feature: { properties },
-                        } = e;
-                        alert('你点击的是' + properties.parentname + properties.areaname);
-                    }
-                });
-
-                //添加到地图/地球上
-                viewer.effectLayers.add(effectLayer);
-
-                //设置服务端查询请求过滤参数
-                dataSource.setFilter({
-                    token: '3086dae859bb41a4ab8855e827ed0747',
-                    paramCodeList: 'KJ5001',
-                    areacode: '440303009',
-                });
-                dataSource.setLayerType('ODLineGround');
-                dataSource.load(function(result) {
-                    var features = dataSource.getFeatures();
-                    var rec = dataSource.getFeatureRectangle(features);
-                    viewer.camera.flyTo({
-                        destination: rec,
-                    });
-                });
-            }
-
-            function clearAll() {
-                viewer.effectLayers.removeAll();
-            }
-
-            function initView() {
-                //地球
-                let viewerEarth = new Cesium.Map('cesiumContainer', {
-                    infoBox: false,
-                    selectionIndicator: false,
-                });
-                //地形
-                let terrainUrls = [
-                    'https://t8.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
-                    'https://t9.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
-                    'https://t10.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
-                    'https://t11.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
-                    'https://t12.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
-                ];
-                let t_Provider = new Cesium.GeoTerrainProvider({
-                    dataType: Cesium.GeoTerrainProvider.INT,
-                    urls: terrainUrls,
-                });
-                viewerEarth.terrainProvider = t_Provider;
-                //天地图影像
-                viewerEarth.imageryLayers.remove(viewerEarth.imageryLayers.get(0));
-                let tdt = new Cesium.UrlTemplateImageryProvider({
-                    url: 'http://{s}.tianditu.com/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e90d56e5a09d1767899ad45846b0cefd',
-                    subdomains: ['t0', 't1', 't2', 't3', 't4', 't5', 't6', 't7'],
-                    maximumLevel: 18,
-                });
-                viewerEarth.imageryLayers.addImageryProvider(tdt);
-                return viewerEarth;
-            }
-        </script>
-
-        <!-- <script>
-            //代理配置
-            var Cfg = {};
-            //系统主机IP地址
-            Cfg.host = window.location.host;
-            //项目名称
-            Cfg.projectName = window.location.pathname.split('/')[1];
-            //代理服务地址
-            Cfg.proxyHostUrl = 'http://' + Cfg.host + '/' + Cfg.projectName + '/proxy?url=';
-
-            //初始化球体
-            var viewer = new Cesium.Map('cesiumContainer', {
-                infoBox: false,
-                selectionIndicator: false,
-            });
-            viewer.scene.highDynamicRange = true;
-            var bloom = viewer.scene.postProcessStages.bloom;
-            bloom.enabled = true;
-            bloom.glowOnly = false;
-            bloom.contrast = 119;
-            bloom.brightness = -0.4;
-            bloom.delta = 0.9;
-            bloom.sigma = 3.78;
-            bloom.stepSize = 5;
-            //添加天地图影像
-            var tdt = new Cesium.UrlTemplateImageryProvider({
-                url: 'http://{s}.tianditu.com/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e90d56e5a09d1767899ad45846b0cefd',
-                subdomains: ['t0', 't1', 't2', 't3', 't4', 't5', 't6', 't7'],
-                maximumLevel: 18,
-            });
-            viewer.imageryLayers.addImageryProvider(tdt);
-            //添加地形
-            // function addTerrainLayer() {
-            //     var TerrainUrls = [
-            //         'https://t8.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
-            //         'https://t9.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
-            //         'https://t10.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
-            //         'https://t11.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
-            //         'https://t12.tianditu.gov.cn/DEM/DataServer?T=ele_c&tk=e90d56e5a09d1767899ad45846b0cefd',
-            //     ];
-            //     var t_Provider = new Cesium.GeoTerrainProvider({
-            //         urls: TerrainUrls,
-            //     });
-            //     viewer.terrainProvider = t_Provider;
-            // }
-            // addTerrainLayer();
-
             var data = [
                 {
-                    //飞线路径：起始点，终结点
-                    posititons: [
-                        [108.95941461215891, 34.21977316226221, 489.1],
-                        [108.96087018650488, 34.219774276548435, 424.7],
-                    ],
-                    color: new Cesium.Color(1.0, 0.0, 0.0, 1.0),
-                    width: 2.0,
-                    duration: 4,
+                    letter: '白皮鸡蛋',
+                    child: {
+                        category: '0',
+                        value: '459.00',
+                    },
                 },
                 {
-                    posititons: [
-                        [108.95941461215891, 34.21977316226221, 489.1],
-                        [108.96097122668127, 34.2193674089985, 423.7],
-                    ],
-                    color: new Cesium.Color(1.0, 1.0, 0.0, 1.0),
-                    width: 2.0,
-                    duration: 6,
+                    letter: '红皮鸡蛋',
+                    child: {
+                        category: '0',
+                        value: '389.00',
+                    },
                 },
-                {
-                    posititons: [
-                        [108.95941461215891, 34.21977316226221, 489.1],
-                        [108.95971212997193, 34.21899045507531, 420.88],
-                    ],
-                    color: new Cesium.Color(1.0, 1.0, 0.0, 1.0),
-                    width: 2.0,
-                    duration: 2,
-                },
-                {
-                    posititons: [
-                        [108.95941461215891, 34.21977316226221, 489.1],
-                        [108.95875093137002, 34.219031045805956, 419.95],
-                    ],
-                    color: new Cesium.Color(1.0, 1.0, 1.0, 1.0),
-                    width: 2.0,
-                    duration: 3,
-                },
-                {
-                    posititons: [
-                        [108.95941461215891, 34.21977316226221, 489.1],
-                        [108.9587636841626, 34.21977580203969, 436.16],
-                    ],
-                    color: new Cesium.Color(1.0, 1.0, 0.0, 1.0),
-                    width: 2.0,
-                    duration: 9,
-                },
-                {
-                    posititons: [
-                        [108.95941461215891, 34.21977316226221, 489.1],
-                        [108.95908522433295, 34.22051160392499, 424.78],
-                    ],
-                    color: new Cesium.Color(1.0, 1.0, 0.0, 1.0),
-                    width: 2.0,
-                    duration: 7,
-                },
-                {
-                    posititons: [
-                        [108.95941461215891, 34.21977316226221, 489.1],
-                        [108.95908788570553, 34.21953809086321, 425.05],
-                    ],
-                    color: new Cesium.Color(1.0, 0, 1.0, 1.0),
-                    width: 2.0,
-                    duration: 2,
-                },
-                {
-                    posititons: [
-                        [108.95941461215891, 34.21977316226221, 489.1],
-                        [108.96018742572704, 34.22021197909346, 424.79],
-                    ],
-                    color: new Cesium.Color(0, 1.0, 0.5, 1.0),
-                    width: 2.0,
-                    duration: 5,
-                },
+                // {
+                //     letter: '鸡蛋',
+                //     child: {
+                //         category: '0',
+                //         value: '336.00',
+                //     },
+                // },
+                // {
+                //     letter: '牛肉',
+                //     child: {
+                //         category: '0',
+                //         value: '282.00',
+                //     },
+                // },
+                // {
+                //     letter: '羊肉',
+                //     child: {
+                //         category: '0',
+                //         value: '249.00',
+                //     },
+                // },
+                // {
+                //     letter: '鸭蛋',
+                //     child: {
+                //         category: '0',
+                //         value: '242.00',
+                //     },
+                // },
+                // {
+                //     letter: '红薯',
+                //     child: {
+                //         category: '0',
+                //         value: '222.00',
+                //     },
+                // },
+                // {
+                //     letter: '白菜',
+                //     child: {
+                //         category: '0',
+                //         value: '182.00',
+                //     },
+                // },
+                // {
+                //     letter: '鸡肉',
+                //     child: {
+                //         category: '0',
+                //         value: '102.00',
+                //     },
+                // },
             ];
-            //抛物飞线
-            var odLine = new Cesium.GeoODLine({
-                viewer: viewer,
-                data: data,
-                playing: true,
-                sampleMaxHeight: 30000, //抛物线的采样最大高程，越大，抛物线越高
-                sampleMaxPoint: 50, //抛物线的采样最多点数据量
-                isParabola: true,
-            });
+            var margin = {
+                top: 50,
+                right: 50,
+                bottom: 50,
+                left: 90,
+            };
+            var svgWidth = 1000;
+            var svgHeight = 500;
+            //创建各个面的颜色数组
+            var mainColorList = [
+                '#f6e242',
+                '#ebec5b',
+                '#d2ef5f',
+                '#b1d894',
+                '#97d5ad',
+                '#82d1c0',
+                '#70cfd2',
+                '#63c8ce',
+                '#50bab8',
+                '#38a99d',
+            ];
+            var topColorList = [
+                '#e9d748',
+                '#d1d252',
+                '#c0d75f',
+                '#a2d37d',
+                '#83d09e',
+                '#68ccb6',
+                '#5bc8cb',
+                '#59c0c6',
+                '#3aadab',
+                '#2da094',
+            ];
+            var rightColorList = [
+                '#dfce51',
+                '#d9db59',
+                '#b9d54a',
+                '#9ece7c',
+                '#8ac69f',
+                '#70c3b1',
+                '#65c5c8',
+                '#57bac0',
+                '#42aba9',
+                '#2c9b8f',
+            ];
+            //
+            var svg = d3
+                .select('#cesiumContainer')
+                .append('svg')
+                .attr('width', svgWidth)
+                .attr('height', svgHeight)
+                .attr('id', 'svg-column');
+            //
+            function addXAxis() {
+                var transform = d3.geoTransform({
+                    point: function(x, y) {
+                        this.stream.point(x, y);
+                    },
+                });
+                //定义几何路径
+                var path = d3.geoPath().projection(transform);
+                var xLinearScale = d3
+                    .scaleBand()
+                    .domain(
+                        data.map(function(d) {
+                            return d.letter;
+                        })
+                    )
+                    .range([20, svgWidth - margin.right - margin.left], 0.1);
+                var xAxis = d3.axisBottom(xLinearScale).ticks(data.length);
+                //绘制X轴
+                var xAxisG = svg
+                    .append('g')
+                    .call(xAxis)
+                    .attr('transform', 'translate(' + margin.left + ',' + (svgHeight - margin.bottom) + ')');
+                console.log(xLinearScale);
 
-            var data2 = [
-                {
-                    posititons: [
-                        [108.95927463525702, 34.21964581827711, 431],
-                        [108.9595749800808, 34.219645631175375, 431],
-                        [108.95958308696105, 34.21989488853628, 431],
-                        [108.95927935614142, 34.21989384150332, 431],
-                        [108.95927463525702, 34.21964581827711, 431],
-                    ],
-                    color: Cesium.Color.RED,
-                    width: 2.0,
-                    duration: 2,
+                //删除原X轴
+                xAxisG.select('path').remove();
+                xAxisG.selectAll('line').remove();
+                //绘制新的立体X轴
+                xAxisG
+                    .append('path')
+                    .datum({
+                        type: 'Polygon',
+                        coordinates: [
+                            // [
+                            //     [20, 0],
+                            //     [0, 15],
+                            //     [svgWidth - margin.right - margin.left, 15],
+                            //     [svgWidth + 20 - margin.right - margin.left, 0],
+                            //     [20, 0],
+                            // ],
+                            [
+                                [margin.left, -margin.left],
+                                [0, margin.left],
+                                [svgWidth - margin.right - margin.left, margin.left],
+                                [svgWidth - margin.right - margin.left - margin.left, -margin.left],
+                                [margin.left, -margin.left],
+                            ],
+                        ],
+                    })
+                    .attr('d', path)
+                    .attr('fill', 'rgb(187,187,187)');
+                xAxisG
+                    .selectAll('text')
+                    .attr('font-size', '18px')
+                    .attr('fill', '#646464')
+                    .attr('transform', 'translate(0,20)');
+
+                dataProcessing(xLinearScale); //核心算法
+            }
+
+            var yLinearScale;
+            //创建y轴的比例尺渲染y轴
+            function addYScale() {
+                yLinearScale = d3
+                    .scaleLinear()
+                    .domain([
+                        0,
+                        d3.max(data, function(d, i) {
+                            return d.child.value * 1;
+                        }) * 1.2,
+                    ])
+                    .range([svgHeight - margin.top - margin.bottom, 0]);
+
+                //定义Y轴比例尺以及刻度
+                var yAxis = d3.axisLeft(yLinearScale).ticks(6);
+
+                //绘制Y轴
+                var yAxisG = svg
+                    .append('g')
+                    .call(yAxis)
+                    .attr('transform', 'translate(' + (margin.left + 10) + ',' + margin.top + ')');
+                yAxisG
+                    .selectAll('text')
+                    .attr('font-size', '18px')
+                    .attr('fill', '#636363');
+                //删除原Y轴路径和tick
+                yAxisG.select('path').remove();
+                yAxisG.selectAll('line').remove();
+            }
+            function dataProcessing(xLinearScale) {
+                var angle = Math.PI / 2.5;
+                for (var i = 0; i < data.length; i++) {
+                    var d = data[i];
+                    var depth = 30;
+                    d.ow = xLinearScale.bandwidth() * 0.2;
+                    d.ox = xLinearScale(d.letter);
+                    d.oh = 1;
+                    d.p1 = {
+                        x: Math.cos(angle) * d.ow,
+                        y: -Math.sin(angle) - depth,
+                    };
+                    d.p2 = {
+                        x: -d.p1.x + d.ow,
+                        y: d.p1.y,
+                    };
+                    d.p3 = {
+                        x: d.p2.x,
+                        y: d.p2.y + d.oh,
+                    };
+                }
+            }
+            function addColumn() {
+                function clumnMouseover(d) {
+                    d3.select(this)
+                        .selectAll('.transparentPath')
+                        .attr('opacity', 0.8);
+                    // 添加 div
+                    tipTimerConfig.target = this;
+                    tipTimerConfig.longer = new Date().getTime();
+                    tipTimerConfig.exist = false;
+                    //获取坐标
+                    tipTimerConfig.winEvent = {
+                        x: event.clientX - 100,
+                        y: event.clientY,
+                    };
+                    tipTimerConfig.boxHeight = 50;
+                    tipTimerConfig.boxWidth = 140;
+
+                    //hide
+                    tipTimerConfig.ClearDiv();
+                    //show
+                    tipTimerConfig.hoverTimerFn(createTooltipTableData(d));
+                }
+
+                function clumnMouseout(d) {
+                    d3.select(this)
+                        .selectAll('.transparentPath')
+                        .attr('opacity', 1);
+                    tipTimerConfig.target = null;
+                    tipTimerConfig.ClearDiv();
+                }
+
+                var g = svg
+                    .selectAll('.g')
+                    .data(data)
+                    .enter()
+                    .append('g')
+                    .on('mouseover', clumnMouseover)
+                    .on('mouseout', clumnMouseout)
+                    .attr('transform', function(d) {
+                        return 'translate(' + (d.ox + margin.left + 20) + ',' + (svgHeight - margin.bottom + 15) + ')';
+                    });
+                g.transition()
+                    .duration(2500)
+                    .attr('transform', function(d) {
+                        return 'translate(' + (d.ox + margin.left + 20) + ', ' + (yLinearScale(d.child.value) + margin.bottom - 15) + ')';
+                    });
+
+                g.append('rect')
+                    .attr('x', 0)
+                    .attr('y', 0)
+                    .attr('class', 'transparentPath')
+                    .attr('width', function(d, i) {
+                        return d.ow;
+                    })
+                    .attr('height', function(d) {
+                        return d.oh;
+                    })
+                    .style('fill', function(d, i) {
+                        return mainColorList[i];
+                    })
+                    .transition()
+                    .duration(2500)
+                    .attr('height', function(d, i) {
+                        return svgHeight - margin.bottom - margin.top - yLinearScale(d.child.value);
+                    });
+
+                g.append('path')
+                    .attr('class', 'transparentPath')
+                    .attr('d', function(d) {
+                        console.log(d);
+
+                        return 'M0,0 L' + d.p1.x + ',' + d.p1.y + ' L' + d.p2.x + ',' + d.p2.y + ' L' + d.ow + ',0 L0,0';
+                    })
+                    .style('fill', function(d, i) {
+                        return topColorList[i];
+                    });
+                // g.append('path')
+                //     .attr('class', 'transparentPath')
+                //     .attr('d', function(d) {
+                //         return (
+                //             'M' +
+                //             d.ow +
+                //             ',0 L' +
+                //             d.p2.x +
+                //             ',' +
+                //             d.p2.y +
+                //             ' L' +
+                //             d.p3.x +
+                //             ',' +
+                //             d.p3.y +
+                //             ' L' +
+                //             d.ow +
+                //             ',' +
+                //             d.oh +
+                //             ' L' +
+                //             d.ow +
+                //             ',0'
+                //         );
+                //     })
+                //     .style('fill', function(d, i) {
+                //         return rightColorList[i];
+                //     })
+                //     .transition()
+                //     .duration(2500)
+                //     .attr('d', function(d, i) {
+                //         return (
+                //             'M' +
+                //             d.ow +
+                //             ',0 L' +
+                //             d.p2.x +
+                //             ',' +
+                //             d.p2.y +
+                //             ' L' +
+                //             d.p3.x +
+                //             ',' +
+                //             (d.p3.y + svgHeight - margin.top - margin.bottom - yLinearScale(d.child.value)) +
+                //             ' L' +
+                //             d.ow +
+                //             ',' +
+                //             (svgHeight - margin.top - margin.bottom - yLinearScale(d.child.value)) +
+                //             ' L' +
+                //             d.ow +
+                //             ',0'
+                //         );
+                //     });
+            }
+            //tip的创建方法(方法来自敬爱的鸣哥)
+            var tipTimerConfig = {
+                longer: 0,
+                target: null,
+                exist: false,
+                winEvent: window.event,
+                boxHeight: 398,
+                boxWidth: 376,
+                maxWidth: 376,
+                maxHeight: 398,
+                tooltip: null,
+
+                showTime: 3500,
+                hoverTime: 300,
+                displayText: '',
+                show: function(val, e) {
+                    'use strict';
+                    var me = this;
+
+                    if (e != null) {
+                        me.winEvent = e;
+                    }
+
+                    me.displayText = val;
+
+                    me.calculateBoxAndShow();
+
+                    me.createTimer();
                 },
-                {
-                    posititons: [
-                        [108.95927463525702, 34.21964581827711, 431],
-                        [108.9595749800808, 34.219645631175375, 431],
-                        [108.95958308696105, 34.21989488853628, 431],
-                        [108.95927935614142, 34.21989384150332, 431],
-                        [108.95927463525702, 34.21964581827711, 431],
-                    ],
-                    color: Cesium.Color.SPRINGGREEN,
-                    width: 2.0,
-                    duration: 1,
+                calculateBoxAndShow: function() {
+                    'use strict';
+                    var me = this;
+                    var _x = 0;
+                    var _y = 0;
+                    var _w = document.documentElement.scrollWidth;
+                    var _h = document.documentElement.scrollHeight;
+                    var wScrollX = window.scrollX || document.body.scrollLeft;
+                    var wScrollY = window.scrollY || document.body.scrollTop;
+                    var xMouse = me.winEvent.x + wScrollX;
+                    if (_w - xMouse < me.boxWidth) {
+                        _x = xMouse - me.boxWidth - 10;
+                    } else {
+                        _x = xMouse;
+                    }
+
+                    var _yMouse = me.winEvent.y + wScrollY;
+                    if (_h - _yMouse < me.boxHeight + 18) {
+                        _y = _yMouse - me.boxHeight - 25;
+                    } else {
+                        _y = _yMouse + 18;
+                    }
+
+                    me.addTooltip(_x, _y);
                 },
-                {
-                    posititons: [
-                        [108.95927463525702, 34.21964581827711, 431],
-                        [108.9595749800808, 34.219645631175375, 431],
-                        [108.95958308696105, 34.21989488853628, 431],
-                        [108.95927935614142, 34.21989384150332, 431],
-                        [108.95927463525702, 34.21964581827711, 431],
-                    ],
-                    color: Cesium.Color.VIOLET,
-                    width: 2.0,
-                    duration: 0.6,
+                addTooltip: function(page_x, page_y) {
+                    'use strict';
+                    var me = this;
+
+                    me.tooltip = document.createElement('div');
+                    me.tooltip.style.left = page_x + 'px';
+                    me.tooltip.style.top = page_y + 'px';
+                    me.tooltip.style.position = 'absolute';
+
+                    me.tooltip.style.width = me.boxWidth + 'px';
+                    me.tooltip.style.height = me.boxHeight + 'px';
+                    me.tooltip.className = 'three-tooltip';
+
+                    var divInnerHeader = me.createInner();
+                    divInnerHeader.innerHTML = me.displayText;
+                    me.tooltip.appendChild(divInnerHeader);
+
+                    document.body.appendChild(me.tooltip);
                 },
-                {
-                    posititons: [
-                        [108.95929563361064, 34.21966376174005, 440],
-                        [108.9592981520959, 34.21988190792008, 440],
-                        [108.95956355809861, 34.219879945328906, 440],
-                        [108.95956076863591, 34.21966186491686, 440],
-                        [108.95929563361064, 34.21966376174005, 440],
-                    ],
-                    color: Cesium.Color.YELLOW,
-                    width: 2.0,
-                    duration: 1.5,
+                createInner: function() {
+                    'use strict';
+                    var me = this;
+                    var divInnerHeader = document.createElement('div');
+                    divInnerHeader.style.width = me.boxWidth + 'px';
+                    divInnerHeader.style.height = me.boxHeight + 'px';
+                    return divInnerHeader;
                 },
-                {
-                    posititons: [
-                        [108.95929563361064, 34.21966376174005, 440],
-                        [108.9592981520959, 34.21988190792008, 440],
-                        [108.95956355809861, 34.219879945328906, 440],
-                        [108.95956076863591, 34.21966186491686, 440],
-                        [108.95929563361064, 34.21966376174005, 440],
-                    ],
-                    color: Cesium.Color.PERU,
-                    width: 2.0,
-                    duration: 0.8,
+                ClearDiv: function() {
+                    'use strict';
+                    var delDiv = document.body.getElementsByClassName('three-tooltip');
+                    for (var i = delDiv.length - 1; i >= 0; i--) {
+                        document.body.removeChild(delDiv[i]);
+                    }
                 },
-            ];
-            //地面轨迹线
-            var odLine2 = new Cesium.GeoODLine({
-                viewer: viewer,
-                data: data2,
-                playing: true,
-                isParabola: false,
-            });
-        </script> -->
+                createTimer: function(delTarget) {
+                    'use strict';
+                    var me = this;
+                    var delTip = me.tooltip;
+                    delTarget = tipTimerConfig.target;
+                    var removeTimer = window.setTimeout(function() {
+                        try {
+                            if (delTip != null) {
+                                document.body.removeChild(delTip);
+                                if (tipTimerConfig.target == delTarget) {
+                                    me.exist = false;
+                                }
+                            }
+                            clearTimeout(removeTimer);
+                        } catch (e) {
+                            clearTimeout(removeTimer);
+                        }
+                    }, me.showTime);
+                },
+                hoverTimerFn: function(showTip, showTarget) {
+                    'use strict';
+                    var me = this;
+
+                    showTarget = tipTimerConfig.target;
+
+                    var hoverTimer = window.setInterval(function() {
+                        try {
+                            if (tipTimerConfig.target != showTarget) {
+                                clearInterval(hoverTimer);
+                            } else if (!tipTimerConfig.exist && new Date().getTime() - me.longer > me.hoverTime) {
+                                //show
+                                tipTimerConfig.show(showTip);
+                                tipTimerConfig.exist = true;
+                                clearInterval(hoverTimer);
+                            }
+                        } catch (e) {
+                            clearInterval(hoverTimer);
+                        }
+                    }, tipTimerConfig.hoverTime);
+                },
+            };
+
+            var createTooltipTableData = function(info) {
+                var ary = [];
+                ary.push("<div class='tip-hill-div'>");
+                ary.push('<h1>品种信息:' + info.letter + '</h1>');
+                ary.push('<h2>成交量: ' + info.child.value);
+                ary.push('</div>');
+                return ary.join('');
+            };
+
+            addXAxis(), addYScale(), addColumn();
+        </script>
     </body>
 </html>
