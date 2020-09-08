@@ -148,6 +148,16 @@ const pagerouters = [
                 },
                 component: (resolve) => require(['../views/mainpage/charts/d3chart.vue'], resolve),
             },
+            {
+                path: 'jxmapdemo',
+                // name: 'echartsMinage',
+                meta: {
+                    title: 'jxmapdemo',
+                    bottom: false,
+                    icon: 'iconfont icon-ditu',
+                },
+                component: (resolve) => require(['../views/mainpage/map/jxmapdemo.vue'], resolve),
+            },
         ],
     },
 ];

@@ -74,6 +74,12 @@ export default {
             mapList: [
                 [
                     {
+                        index: 6,
+                        name: "jxmapdemo",
+                        content: "江西地图demo",
+                        icon: "iconfont icon-ditu",
+                    },
+                    {
                         index: 1,
                         name: "baidumap",
                         content: "百度地图",
