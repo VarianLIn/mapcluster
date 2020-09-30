@@ -58,6 +58,7 @@ export default {
         map = initMap("minage", this.magfg);
         initMapopera(map, this.magfg.lnglatlv);
         this.minagtion();
+        this.minagtion_25d();
     },
     methods: {
         minagtion() {
@@ -210,6 +211,61 @@ export default {
                 echartslayer.chart.setOption(option);
             }); // $http
         },
+        minagtion_25d(){
+            debugger
+            var threebox = new GeoGlobe.Visuals.Three();
+            //添加到地图中
+            threebox.addTo(map);
+            // //绑定鼠标点击事件
+            // threebox.on('overlayerclick', function(e) {
+            //     var xyz = threebox.unprojectFromWorld(
+            //         e.param.pickedInfos[0].point
+            //     );
+            //     alert(
+            //         e.param.info.userData.attributes.OriginalData.properties
+            //             .name +
+            //             '\n经纬度及高程:' +
+            //             xyz
+            //     );
+            //     console.info(e);
+            // });
+            // //绑定鼠标移动事件
+            // threebox.on('overlayerhover', function(e) {
+            //     console.info(e);
+            // });
+            //构造三维弧线图层
+            var curveLayer = new GeoGlobe.Visuals.Three.CurveLayer({
+                id: "3D curve",
+                data: [
+                    {
+                        type: "Feature",
+                        properties: {
+                            name: "1->2",
+                            width: 30,
+                            curveness: 0.5,
+                            color: "yellow",
+                        },
+                        geometry: {
+                            type: "LineString",
+                            coordinates: [
+                                [116.72290857865096, 28.61584435027592],
+                                [119.99930055779294, 28.639465368802078],
+                            ],
+                        },
+                    },
+                ],
+                // texture:
+                // "http://172.17.0.148:8080/proxy/ProxyHandler?url=http://192.168.42.50:8888/geomap-api/JsCodeDemo_new/images/lensflare.png",
+                visible: true,
+            });
+            //添加到THREE图层
+            curveLayer.addTo(threebox);
+            //绘制
+            threebox.render();
+            console.log(map._visuals)
+        }
+
+    
     }, //methods
 };
 </script>

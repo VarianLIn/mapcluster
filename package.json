@@ -12,6 +12,7 @@
     "core-js": "^3.6.5",
     "echarts": "^4.9.0",
     "echarts-gl": "^1.1.1",
+    "jquery": "^3.5.1",
     "less": "^3.12.2",
     "less-loader": "^6.2.0",
     "view-design": "^4.3.2",

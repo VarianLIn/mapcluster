@@ -9,7 +9,7 @@
 /* eslint-disable no-undef */
 /*eslint-disable no-unused-vars*/
 /* eslint-disable no-debugger*/
-
+import $ from 'jquery';
 // 测试
 export function getMapSize() {
     var contentH = 60 + 30; // 头部or底部的高度
@@ -85,6 +85,73 @@ export function initMap(containerID, mapfg) {
     // //画图控件
     // var Draw = new MapboxDraw();
     // basemap.addControl(Draw, 'top-left');
+
+    // var custom = new GeoGlobe.Visuals.Custom();
+    // //添加到地图中
+    // custom.addTo(basemap);
+
+    // custom.on('overlayerclick', function(e) {
+    //     console.info(e);
+    //     $('.mapboxgl-marker').remove();
+    //     let info =
+    //         '<div class="popup">' +
+    //         '<div class="_title"><i></i><span class="name">' +
+    //         e.feature.name +
+    //         '</span><i></i><span class="close" title="关闭">X</span></div>' +
+    //         '<div class="_content"><ul>' +
+    //         '<li><span class="_t">NOx</span><span class="_num">2天</span></li>' +
+    //         '<li><span class="_t">SO2</span><span class="_num">5天</span></li>' +
+    //         '<li><span class="_t">vocs</span><span class="_num">3天</span></li>' +
+    //         '<li><span class="_t">氨氮</span><span class="_num">2.5倍</span></li>' +
+    //         '<li><span class="_t">总氮</span><span class="_num">2.5倍</span></li>' +
+    //         '<li><span class="_t">总磷</span><span class="_num">2.5倍</span></li>' +
+    //         '</ul></div>' +
+    //         '</div>' +
+    //         '<div class="popup_bottom"></div>';
+    //     //直接显示信息框
+    //     let m = new mapboxgl.Marker();
+    //     m.setLngLat([e.event.lngLat.lng, e.event.lngLat.lat]);
+    //     m._element.innerHTML = info;
+    //     m.addTo(basemap);
+    //     $('.popup .close').click(function() {
+    //         $('.mapboxgl-marker').remove();
+    //     });
+    // });
+    // // //绑定鼠标点击事件
+    // // custom.on('overlayerclick', function(e) {
+    // //     console.info(e);
+    // // });
+    // // //绑定鼠标移动事件
+    // // custom.on('overlayerhover', function(e) {
+    // //     console.info(e);
+    // // });
+    // //构造气泡图层
+    // var bubble = new GeoGlobe.Visuals.Custom.Bubble({
+    //     id: 'bubble_1',
+    //     visibility: true,
+    //     dragdrawing: true,
+    //     data: [
+    //         {
+    //             type: 'Feature',
+    //             properties: { name: '湖北省', value: 666 },
+    //             geometry: { type: 'Point', coordinates: [114.28364837577942, 30.63281125337673] },
+    //         },
+    //     ],
+    //     rendererOptions: {
+    //         markPoint: {
+    //             hoverable: true,
+    //             clickable: true,
+    //             symbol: 'bubble',
+    //             itemStyle: {
+    //                 color: 'rgba(255,0,0,0.7)',
+    //             },
+    //         },
+    //     },
+    // });
+    // //添加到可视化定制图层
+    // bubble.addTo(custom);
+    // //绘制
+    // custom.render();
     return basemap;
 }
 

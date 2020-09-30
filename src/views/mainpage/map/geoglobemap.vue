@@ -4,25 +4,18 @@
 <script>
 /* eslint-disable no-undef */
 /*eslint-disable no-unused-vars*/
-import {
-    getMapSize,
-    initMap,
-    initMapopera,
-    addFeatureLayer,
-    createPopupDom,
-    markerDom,
-} from "../../../render.js";
+import { getMapSize, initMap, initMapopera, addFeatureLayer, createPopupDom, markerDom } from '../../../render.js';
 
 let map = null;
 
 export default {
-    name: "",
+    name: '',
     data() {
         return {
             magfg: {
                 isTDT: true,
                 host: window.location.host,
-                projectName: window.location.pathname.split("/")[1],
+                projectName: window.location.pathname.split('/')[1],
                 style: {
                     version: 8,
                     sources: {},
@@ -31,11 +24,11 @@ export default {
                 lnglatlv: { lng: 114.345, lat: 30.675, lv: 10 },
             },
             pageSize: {
-                height: "",
+                height: '',
             },
             toggleStatus: true,
             controlStatus: true,
-            marker: "",
+            marker: '',
         };
     },
     computed: {},
@@ -43,7 +36,7 @@ export default {
         this.pageSize.height = getMapSize();
     },
     mounted() {
-        map = initMap("md", this.magfg);
+        map = initMap('md', this.magfg);
         initMapopera(map, this.magfg.lnglatlv);
     },
     methods: {
@@ -298,4 +291,10 @@ export default {
 }
 </style>
 
-<style lang="less"></style>
+<style lang="less">
+.popup {
+    background-color: #808fef;
+    height: 200px;
+    width: 200px;
+}
+</style>
