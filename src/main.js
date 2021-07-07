@@ -9,6 +9,8 @@ import axios from 'axios';
 import { router } from './router/index';
 // import echarts from 'echarts';
 import 'echarts-gl';
+import jquery from 'jquery';
+window.jquery = window.$ = jquery;
 
 // Vue.use(axios);
 Vue.prototype.$http = axios;

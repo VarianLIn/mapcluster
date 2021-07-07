@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <meta name="keywords" content="天地图" />
+        <title>天地图示例</title>
+        <script type="text/javascript" src="http://xizang.tianditu.gov.cn/api/api?v=4.0"></script>
+        <!-- <script type="text/javascript" src="../../../api/js4.0/js/changeLogo.js"></script> -->
+        <style type="text/css">
+            body,
+            html {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                font-family: 'Microsoft YaHei';
+            }
+            #mapDiv {
+                width: 100%;
+                height: 600px;
+            }
+        </style>
+        <script>
+            var map;
+            var mapServe,lay;
+            var zoom = 6;
+            var wmsLayer;
+            
+            var vectorLayer,vertorMarker,imgLayer,imgMarker,serverLayer;
+
+            // var vectorLayerURL = "http://t0.tianditu.gov.cn:80/vec_c/wmts?tk=75a23048eb44b3836ee3ae9f7c773d8f",
+            var vectorLayerURL="http://t0.tianditu.gov.cn/vec_c/wmts?tk=75a23048eb44b3836ee3ae9f7c773d8f",
+            vertorMarkerURL = "http://t0.tianditu.gov.cn:80/cva_c/wmts?tk=75a23048eb44b3836ee3ae9f7c773d8f",
+            imgLayerURL = "http://t0.tianditu.gov.cn:80/img_c/wmts?tk=75a23048eb44b3836ee3ae9f7c773d8f",    
+            imgMarkerURL = "http://t0.tianditu.gov.cn:80/cia_c/wmts?tk=75a23048eb44b3836ee3ae9f7c773d8f",
+            serverLayerURL = "http://10.162.7.194:9010/shiliang0927/"
+            
+            // 初始化天地图
+            function onLoad() {
+                map = new T.Map('mapDiv', {
+                    projection: 'EPSG:4326',
+                });
+                map.centerAndZoom(new T.LngLat(116.068, 39.868), zoom);
+                // http://xizang.tianditu.gov.cn:81/DataServer?T=cva_c&x={x}&y={y}&l={z}
+            }
+            // 矢量底图
+            function addVecLayer(){
+                if(vectorLayer){
+                    map.removeLayer(vectorLayer)
+                }else{
+                    vectorLayer = new T.TileLayer(vectorLayerURL, { minZoom: 1, maxZoom: 18 });
+                    let config = { layers: [vectorLayer] };
+                    //初始化地图对象
+                    vecMap = new T.Map('mapDiv', config);
+                    //设置显示地图的中心点和级别
+                    vecMap.centerAndZoom(new T.LngLat(116.068, 39.868), zoom);
+                }
+            }
+
+            // 影像底图
+            function addImgLayer(){
+                if(imgLayer){
+                    map.removeLayer(imgLayer)
+                }else{
+                    imgLayer = new T.TileLayer(imgLayerURL, { minZoom: 1, maxZoom: 18 });
+                    let config = { layers: [imgLayer] };
+                    //初始化地图对象
+                    imgMap = new T.Map('mapDiv', config);
+                    //设置显示地图的中心点和级别
+                    imgMap.centerAndZoom(new T.LngLat(116.068, 39.868), zoom);
+                }
+            }
+
+            // 地图服务
+            function addMapServer(){
+                if(serverLayer){
+                    map.removeLayer(serverLayer)
+                }else{
+                    var layers = "";
+                    var config = {
+                        version: '1.1.1', //请求服务的版本
+                        layers: layers,
+                        transparent: true, //输出图像背景是否透明
+                        styles: '', //每个请求图层的用","分隔的描述样式
+                        format: 'image/png', //输出图像的类型
+                    };
+                    serverLayer = new T.TileLayer.WMS(serverLayerURL, config);
+                    map.addLayer(serverLayer);
+                }
+            }
+
+            function removeAllLayer(){
+                
+            }
+
+            // // 加载地图服务
+            // function addTileLayer() {
+            //     // var imageURL =
+            //     //     'http://xizang.tianditu.gov.cn:81/img_w/wmts?' +
+            //     //     'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles' +
+            //     //     '&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
+
+            //     // var imageURL = 'http://xizang.tianditu.gov.cn:81/DataServer?T=img_c&x={x}&y={y}&l={z}';
+            //     // var imageURL = 'http://t0.tianditu.gov.cn:80/vec_c/wmts?tk=ff71f3b0dd749e5f0fa59ab723aefcea';
+
+            //     //创建自定义图层对象
+            //     lay = new T.TileLayer(imageURL, { minZoom: 1, maxZoom: 18 });
+            //     var config = { layers: [lay] };
+            //     //初始化地图对象
+            //     mapServe = new T.Map('mapDiv', config);
+            //     //设置显示地图的中心点和级别
+            //     mapServe.centerAndZoom(new T.LngLat(116.068, 39.868), zoom);
+
+            // }
+
+            // // 添加wms地图服务
+            // function getWMS(url, config) {
+            //     if (wmsLayer) {
+            //         map.removeLayer(wmsLayer);
+            //     }
+            //     wmsLayer = new T.TileLayer.WMS(url, config);
+            //     map.addLayer(wmsLayer);
+            // }
+
+            // function addWmsLayer(layers, url) {
+            //     var config = {
+            //         version: '1.1.1', //请求服务的版本
+            //         layers: layers,
+            //         transparent: true, //输出图像背景是否透明
+            //         styles: '', //每个请求图层的用","分隔的描述样式
+            //         format: 'image/png', //输出图像的类型
+            //     };
+            //     getWMS(url, config);
+            // }
+        </script>
+    </head>
+    <body onLoad="onLoad()">
+        <div id="mapDiv"></div>
+        <div style="position:absolute;">
+            <!-- <p>叠加一个WMS图层，服务地址为：http://gisserver.tianditu.com/tiandituService/wms</p> -->
+            <p></p>
+            <input
+                type="button"
+                value="矢量底图"
+                onClick="addVecLayer()"
+            />
+            <input
+                type="button"
+                value="影像底图"
+                onClick="addImgLayer()"
+            />
+            <input
+                type="button"
+                value="服务图层"
+                onClick="addMapServer()"
+                disabled
+            />
+            <p></p>
+            <input type="button" value="删除所有图层" onClick="removeAllLayer()" />
+
+            <!-- <p>叠加一个瓦片服务图层，服务地址为：http://xizang.tianditu.gov.cn:81/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x};</p> -->
+            <!-- <p></p>
+            <input type="button" value="加载单个图层" onClick="addTileLayer()" />
+            <input type="button" value="删除服务图层" onClick="mapServe.removeLayer(lay);" /> -->
+
+        </div>
+        </div>
+    </body>
+</html>

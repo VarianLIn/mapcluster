@@ -212,7 +212,7 @@ export default {
             }); // $http
         },
         minagtion_25d(){
-            debugger
+            // debugger
             var threebox = new GeoGlobe.Visuals.Three();
             //添加到地图中
             threebox.addTo(map);

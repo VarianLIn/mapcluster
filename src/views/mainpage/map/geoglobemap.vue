@@ -1,34 +1,47 @@
 <template>
-    <div class="md" id="md" :style="pageSize"></div>
+    <div class="main">
+        <div class="md" id="md" :style="pageSize"></div>
+        <!-- <div class="testLineLayer"></div> -->
+        <lineLayer v-if="lineShow" :map="map" :lineData="lineData" />
+        <button class="btn" @click="addLineLayer">添加线图层</button>
+        <button class="btn1" @click="remove">移除线图层</button>
+    </div>
 </template>
 <script>
 /* eslint-disable no-undef */
 /*eslint-disable no-unused-vars*/
 import { getMapSize, initMap, initMapopera, addFeatureLayer, createPopupDom, markerDom } from '../../../render.js';
-
-let map = null;
+import lineLayer from '../../../components/lineLayer';
+// let map = null;
 
 export default {
     name: '',
+    components: {
+        lineLayer
+    },
     data() {
         return {
-            magfg: {
+            map: null,
+            mapfg: {
                 isTDT: true,
                 host: window.location.host,
                 projectName: window.location.pathname.split('/')[1],
                 style: {
                     version: 8,
                     sources: {},
-                    layers: [],
+                    layers: []
                 },
-                lnglatlv: { lng: 114.345, lat: 30.675, lv: 10 },
+                lnglatlv: { lng: 114.345, lat: 30.675, lv: 10 }
             },
             pageSize: {
-                height: '',
+                height: ''
             },
             toggleStatus: true,
             controlStatus: true,
             marker: '',
+            lineData: null,
+            lineShow: false,
+            lineMap: null
         };
     },
     computed: {},
@@ -36,10 +49,68 @@ export default {
         this.pageSize.height = getMapSize();
     },
     mounted() {
-        map = initMap('md', this.magfg);
-        initMapopera(map, this.magfg.lnglatlv);
+        // map = initMap('md', this.magfg);
+        // initMapopera(map, this.magfg.lnglatlv);
+        this.init();
     },
     methods: {
+        addLineLayer() {
+            debugger;
+            // this.lineMap = this.map;
+
+            var linedata = {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: [
+                            [113.96871826170354, 30.7169211257597],
+                            [114.11154052733059, 30.6791338777755],
+                            [114.23307678221272, 30.6608253616984],
+                            [114.34155914943562, 30.6460644608508],
+                            [114.45004913967261, 30.6324764072989],
+                            [114.54411957424264, 30.6289313837776],
+                            [114.62033722560136, 30.6289313837776],
+                            [114.68076203029216, 30.6425199352542]
+                        ]
+                    }
+                }
+            };
+            this.lineData = linedata;
+
+            this.lineShow = true;
+        },
+        remove(){
+            this.lineShow = false
+        },
+        init() {
+            this.map = new GeoGlobe.Map({
+                style: this.mapfg.style,
+                container: 'md',
+                center: [this.mapfg.lnglatlv.lng, this.mapfg.lnglatlv.lat],
+                zoom: this.mapfg.lnglatlv.lv,
+                maxZoom: 16,
+                minZoom: 2
+            });
+            this.map.on('load', () => {
+                var token = 'e90d56e5a09d1767899ad45846b0cefd';
+                var layer_vtc = new GeoGlobe.TDTLayer('vec_w', token);
+                var layer_cva = new GeoGlobe.TDTLayer('cva_w', token);
+                this.map.addLayer(layer_vtc);
+                this.map.addLayer(layer_cva);
+            });
+            this.map.on('zoomend', (e) => {
+                console.log(e);
+            });
+            this.map.on('click', function(e) {
+                console.log(e);
+            });
+            this.map.on('mousedown', function(e) {
+                // console.log('A click event has occurred at ' + e.lngLat.toArray());
+                console.log(e.lngLat.toArray());
+            });
+        }
         // init() {
         //     document.getElementsByClassName('mapboxgl-missing-css')[0].remove();
         //     document.getElementsByClassName('mapboxgl-canvas-container')[0].remove();
@@ -63,7 +134,7 @@ export default {
         //     };
         //     map.flyTo(flyObj);
         // },
-    }, //methods
+    } //methods
 };
 </script>
 <style lang="css">
@@ -296,5 +367,21 @@ export default {
     background-color: #808fef;
     height: 200px;
     width: 200px;
+}
+</style>
+
+<style scoped>
+.main {
+    position: relative;
+}
+.btn {
+    position: absolute;
+    top: 200px;
+    right: 300px;
+}
+.btn1 {
+    position: absolute;
+    top: 220px;
+    right: 300px;
 }
 </style>

@@ -34,9 +34,9 @@
                     <MenuItem name="echarts">
                         <Icon custom="iconfont icon-qita"></Icon>echart3d柱形图
                     </MenuItem>
-                    <MenuItem name="d3chart">
+                    <!-- <MenuItem name="d3chart">
                         <Icon custom="iconfont icon-qita"></Icon>d3图表
-                    </MenuItem>
+                    </MenuItem> -->
                 </MenuGroup>
             </Submenu>
             <MenuItem name="other">

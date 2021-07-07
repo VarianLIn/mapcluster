@@ -9,6 +9,7 @@
 /* eslint-disable no-undef */
 /*eslint-disable no-unused-vars*/
 /* eslint-disable no-debugger*/
+
 import $ from 'jquery';
 // 测试
 export function getMapSize() {
@@ -38,7 +39,8 @@ export function status() {
 // 地图初始化
 export function initMap(containerID, mapfg) {
     let basemap = null;
-    mapboxgl.accessToken = 'pk.eyJ1IjoidmFyaWFubGluIiwiYSI6ImNrY3EyNzUwYTEwczAycmx1Zzc5dTlkM20ifQ.NE25cXftMqiajLsD5sqHkg';
+    mapboxgl.accessToken =
+        'pk.eyJ1IjoidmFyaWFubGluIiwiYSI6ImNrY3EyNzUwYTEwczAycmx1Zzc5dTlkM20ifQ.NE25cXftMqiajLsD5sqHkg';
 
     basemap = new GeoGlobe.Map({
         style: mapfg.style,
@@ -46,7 +48,7 @@ export function initMap(containerID, mapfg) {
         center: [mapfg.lnglatlv.lng, mapfg.lnglatlv.lat],
         zoom: mapfg.lnglatlv.lv,
         maxZoom: 16,
-        minZoom: 2,
+        minZoom: 2
     });
     var isTDT = eval(mapfg.isTDT);
     //判断是否添加天地图 -墨卡托数据的天地图
@@ -79,7 +81,7 @@ export function initMap(containerID, mapfg) {
     Sca_control = new GeoGlobe.Control.Scale({
         position: 'bottom-left',
         maxWidth: 100,
-        unit: 'imperial',
+        unit: 'imperial'
     });
     basemap.addControl(Sca_control);
     // //画图控件
@@ -158,11 +160,11 @@ export function initMap(containerID, mapfg) {
 // 地图拖拽点击缩放功能
 export function initMapopera(basemap, lnglatlv) {
     // console.log(lnglatlv);
-    basemap.on('click', function(e) {
-        console.log(e);
-        console.log('x lng ', e.lngLat.lng);
-        console.log('y lat', e.lngLat.lat);
-    });
+    // basemap.on('click', function(e) {
+    //     console.log(e);
+    //     console.log('x lng ', e.lngLat.lng);
+    //     console.log('y lat', e.lngLat.lat);
+    // });
     basemap.on('dragend', function(e) {
         lnglatlv.lng = e.target.transform.center.lng;
         lnglatlv.lat = e.target.transform.center.lat;
@@ -187,7 +189,7 @@ export function addFeatureLayer(basemap, dataObj, Paint) {
         id: dataObjID,
         type: dataObjType,
         source: dataSour,
-        paint: dataPaint,
+        paint: dataPaint
     };
     if (basemap.getLayer(dataObjID)) {
         alert('Layer already exists');
